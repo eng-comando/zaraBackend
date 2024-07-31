@@ -40,7 +40,7 @@ const upload = multer({storage: storage});
 app.use("/images", express.static("upload/images"));
 
 app.post("/upload", upload.array('image', 5), (req, res) => {
-    const imageUrls = req.files.map(file => `https://zaramzbackend.onrender.com/images/${file.filename}`);
+    const imageUrls = req.files.map(file => `https://zarabackend-22s0.onrender.com/images/${file.filename}`);
     
     res.json({
         success: 1,
