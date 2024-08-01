@@ -100,7 +100,7 @@ const transporter = nodemailer.createTransport({
 exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
     const mailOptions = {
         from: 'edsonanibal1@gmail.com',
-        to: req.recipientEmail,
+        to: req.body.recipientEmail,
         subject: 'Confirmação de Pagamento',
         text: 'Seu pagamento foi confirmado com sucesso! Em breve recebera mais detalhes. Obrigado por comprar conosco.'
     };
