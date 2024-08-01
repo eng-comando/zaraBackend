@@ -94,7 +94,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'edsonanibal1@gmail.com',
-        pass: 'edsonaniana'
+        pass: 'jerh wyau lxwn jqyb'
     }
 });
 exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
