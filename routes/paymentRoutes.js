@@ -11,4 +11,6 @@ router.post('/payment', paymentController.payment);
 
 router.post('/sendOrder', paymentController.order);
 
+router.post('/sendConfirmationEmail', paymentController.sendConfirmationEmail);
+
 module.exports = router;

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
+const nodemailer = require('nodemailer');
 
 exports.token = asyncHandler(async (req, res, next) => {
     try {
@@ -87,4 +88,28 @@ exports.order = asyncHandler(async (req, res, next) => {
 exports.allorders = asyncHandler(async (req, res, next) => {
     let orders = await Order.find({});
     res.send(orders);
+});
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'edsonanibal1@gmail.com',
+        pass: 'edsonaniana'
+    }
+});
+exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
+    const mailOptions = {
+        from: 'edsonanibal1@gmail.com',
+        to: req.recipientEmail,
+        subject: 'Confirmação de Pagamento',
+        text: 'Seu pagamento foi confirmado com sucesso! Em breve recebera mais detalhes. Obrigado por comprar conosco.'
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        console.error('Erro ao enviar e-mail: ', error);
+        res.send('Erro ao enviar e-mail: ', error);
+    }
+    res.send('Sent');
 });
