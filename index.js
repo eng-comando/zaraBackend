@@ -39,7 +39,7 @@ const upload = multer({storage: storage});
 // Criando um endpoint de upload para imagens
 app.use("/images", express.static("upload/images"));
 
-app.post("/upload", upload.array('image', 5), (req, res) => {
+app.post("/upload", upload.array('image'), (req, res) => {
     const imageUrls = req.files.map(file => `https://zarabackend-22s0.onrender.com/images/${file.filename}`);
     
     res.json({
