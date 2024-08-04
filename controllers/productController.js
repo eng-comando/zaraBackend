@@ -91,12 +91,14 @@ exports.addtocart = [fetchUser, asyncHandler(async (req, res, next) => {
     console.log("adicionado", req.body.itemId);
     let userData = await User.findOne({_id:req.user.id});
 
-    userData.cartData[req.body.itemId].name = req.body.name;
-    userData.cartData[req.body.itemId].image = req.body.image;
-    userData.cartData[req.body.itemId].price += req.body.price;
-    userData.cartData[req.body.itemId][req.body.quantityField] += 1;
-    userData.cartData[req.body.itemId].link = req.body.link;
-    userData.cartData[req.body.itemId].sizes.push(req.body.size);
+    const item = userData.cartData[itemId];
+    item.name = req.body.name;
+    item.image = req.body.image;
+    item.price = req.body.price; 
+    item[req.body.quantityField] = (item[req.body.quantityField] || 0) + 1;
+    item.link = req.body.link;
+    item.sizes = item.sizes || [];
+    item.sizes.push(req.body.size);
 
     await User.findOneAndUpdate({_id:req.user.id}, {cartData:userData.cartData});
     res.send("Added");
