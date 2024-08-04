@@ -31,7 +31,6 @@ exports.addproduct = asyncHandler(async (req, res, next) => {
         sizes:req.body.sizes,
         link:req.body.link,
     });
-    console.log(product);
     await product.save();
     console.log("Saved");
 
@@ -95,7 +94,7 @@ exports.addtocart = [fetchUser, asyncHandler(async (req, res, next) => {
     userData.cartData[req.body.itemId].name = req.body.name;
     userData.cartData[req.body.itemId].image = req.body.image;
     userData.cartData[req.body.itemId].price += req.body.price;
-    userData.cartData[req.body.itemId].quantity += 1;
+    userData.cartData[req.body.itemId][req.body.quantityField] += 1;
     userData.cartData[req.body.itemId].link = req.body.link;
     userData.cartData[req.body.itemId].sizes.push(req.body.size);
 
@@ -107,7 +106,7 @@ exports.removefromcart = [fetchUser, asyncHandler(async (req, res, next) => {
     console.log("removed", req.body.itemId);
     let userData = await User.findOne({_id:req.user.id});
     if(userData.cartData[req.body.itemId].quantity > 0) {
-        userData.cartData[req.body.itemId].quantity -= 1;
+        userData.cartData[req.body.itemId][req.body.quantityField] -= 1;
         userData.cartData[req.body.itemId].sizes.pop();
         await User.findOneAndUpdate({_id:req.user.id}, {cartData:userData.cartData});
         res.send("Removed");
