@@ -94,7 +94,7 @@ exports.addtocart = [fetchUser, asyncHandler(async (req, res, next) => {
     userData.cartData[req.body.itemId].name = req.body.name;
     userData.cartData[req.body.itemId].image = req.body.image;
     userData.cartData[req.body.itemId].price = req.body.price; 
-    userData.cartData[req.body.itemId][req.body.quantityField] =+ 1;
+    userData.cartData[req.body.itemId][req.body.quantityField] += 1;
     userData.cartData[req.body.itemId].link = req.body.link;
     userData.cartData[req.body.itemId].sizes.push(req.body.size);
 
