@@ -12,6 +12,7 @@ const axios = require('axios');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const processOrderRoutes = require('./routes/processOrderRoutes');
 
 app.use(express.json());
 app.use(cors());
@@ -22,7 +23,7 @@ mongoose.connect("mongodb+srv://edsonanibal:"+ encodeURIComponent("Aniana@2017")
 app.use('/', productRoutes);
 app.use('/', userRoutes);
 app.use('/', paymentRoutes);
-
+app.use('/', order);
 
 // Image Stogare Engine
 
