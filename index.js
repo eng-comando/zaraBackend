@@ -23,7 +23,7 @@ mongoose.connect("mongodb+srv://edsonanibal:"+ encodeURIComponent("Aniana@2017")
 app.use('/', productRoutes);
 app.use('/', userRoutes);
 app.use('/', paymentRoutes);
-app.use('/', order);
+app.use('/', processOrderRoutes);
 
 // Image Stogare Engine
 
