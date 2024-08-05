@@ -41,7 +41,8 @@ exports.allorders = asyncHandler(async (req, res, next) => {
 
 exports.getOrderById = asyncHandler(async (req, res, next) => {
     try {
-      const orderId = req.params._id;
+      const orderId = req.params.id;
+      console.log(orderId);
       const order = await Order.findById(orderId);
   
       if (!order) {
