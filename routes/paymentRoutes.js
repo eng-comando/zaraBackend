@@ -5,11 +5,7 @@ const paymentController = require('../controllers/paymentController');
 
 router.get('/token', paymentController.token);
 
-router.get('/allorders', paymentController.allorders);
-
 router.post('/payment', paymentController.payment);
-
-router.post('/sendOrder', paymentController.order);
 
 router.post('/sendConfirmationEmail', paymentController.sendConfirmationEmail);
 

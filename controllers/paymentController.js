@@ -56,40 +56,6 @@ exports.payment = asyncHandler(async (req, res, next) => {
     }
 });
 
-exports.order = asyncHandler(async (req, res, next) => {
-    const items = req.body.items;
-
-    const cartItems = await Promise.all(items.map(async (itemData) => {
-        const cartItem = new CartItem({
-            link: itemData.link,
-            name: itemData.name,
-            price: itemData.price,
-            sizes: itemData.sizes
-        });
-        await cartItem.save();
-        return cartItem;
-    }));
-
-    const order = new Order({
-        items: cartItems.map(cartItem => cartItem._id),
-        phoneNumber: req.body.phoneNumber,
-        callNumber: req.body.callNumber,
-        email: req.body.email,
-        name: req.body.name,
-        status: req.body.status,
-        price: req.body.price
-    });
-
-    await order.save();
-
-    res.send("Added");
-});
-
-exports.allorders = asyncHandler(async (req, res, next) => {
-    let orders = await Order.find({});
-    res.send(orders);
-});
-
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
