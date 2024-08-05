@@ -1,5 +1,4 @@
 const asyncHandler = require("express-async-handler");
-const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
@@ -42,8 +41,8 @@ exports.allorders = asyncHandler(async (req, res, next) => {
 exports.getOrderById = asyncHandler(async (req, res, next) => {
     try {
       const orderId = req.params.id;
-      console.log(orderId);
-      const order = await Order.findById(orderId);
+  
+      const order = await Order.findById(orderId).populate('items');
   
       if (!order) {
         return res.status(404).json({ message: 'Order not found' });
