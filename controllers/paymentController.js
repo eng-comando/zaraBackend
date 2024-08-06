@@ -68,7 +68,7 @@ exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
         from: 'edsonanibal1@gmail.com',
         to: req.body.recipientEmail,
         subject: req.body.subject,
-        text: req.body.text
+        html: req.body.html
     };
 
     try {
