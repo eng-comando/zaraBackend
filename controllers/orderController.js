@@ -54,4 +54,25 @@ exports.getOrderById = asyncHandler(async (req, res, next) => {
       res.status(500).json({ message: 'Server error' });
     }
   });
+
+  exports.deleteOrder = asyncHandler(async (req, res, next) => {
+      try{
+        const orderId = req.params.id;
+
+        const order = await Order.findById(orderId);
+
+        if(!order) {
+          return res.status(404).json({ message: 'Order not found' })
+        }
+
+        await CartItem.deleteMany({ _id: { $in: order.items }});
+
+        await Order.findByIdAndDelete(orderId);
+
+        res.status(200).json({ message: 'Order and associated CartItems deleted sucessfully'})
+      } catch(error) {
+        console.error('Error deleting order:', error);
+        res.status(500).json({ message: 'Server error'});
+      }
+  })
   
