@@ -67,9 +67,8 @@ exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
     const mailOptions = {
         from: 'edsonanibal1@gmail.com',
         to: req.body.recipientEmail,
-        subject: 'Confirmação de Pagamento',
-        text: 'Seu pagamento foi confirmado com sucesso! Detalhes dos produtos: \n'+
-        req.body.details+'\nEm breve recebera mais detalhes. \nObrigado por comprar conosco.'
+        subject: req.body.subject,
+        text: req.body.text
     };
 
     try {
