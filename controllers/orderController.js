@@ -74,5 +74,22 @@ exports.getOrderById = asyncHandler(async (req, res, next) => {
         console.error('Error deleting order:', error);
         res.status(500).json({ message: 'Server error'});
       }
-  })
-  
+  });
+
+  exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
+    const { id } = req.params; 
+    const { status } = req.body;
+
+    try {
+        const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        
+        res.json(order);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+  });
