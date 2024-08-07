@@ -12,7 +12,8 @@ exports.order = asyncHandler(async (req, res, next) => {
             link: itemData.link,
             name: itemData.name,
             price: itemData.price,
-            sizes: itemData.sizes
+            sizes: itemData.sizes,
+            productId: itemData.productId
         });
         await cartItem.save();
         return cartItem;
