@@ -57,15 +57,17 @@ exports.payment = asyncHandler(async (req, res, next) => {
 });
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.hostinger.com', 
+    port: 587, 
+    secure: false, 
     auth: {
-        user: 'edsonanibal1@gmail.com',
-        pass: 'jerh wyau lxwn jqyb'
+      user: 'noreply@zara-mz.shop', 
+      pass: 'Aniana@2017'
     }
 });
 exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
     const mailOptions = {
-        from: 'edsonanibal1@gmail.com',
+        from: 'noreply@zara-mz.shop',
         to: req.body.recipientEmail,
         subject: req.body.subject,
         html: req.body.html
