@@ -110,6 +110,7 @@ exports.addtocart = [fetchUser, asyncHandler(async (req, res, next) => {
         item.link = req.body.link;
         item.sizes = item.sizes || [];
         item.sizes.push(req.body.size);
+        item.productId = req.body.productId;
 
         userData.cartData[itemId] = item;
         await User.findOneAndUpdate({ _id: req.user.id }, { cartData: userData.cartData });
