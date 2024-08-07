@@ -15,7 +15,6 @@ exports.order = asyncHandler(async (req, res, next) => {
             sizes: itemData.sizes,
             productId: itemData.productId
         });
-        console.log(cartItem);
         await cartItem.save();
         return cartItem;
     }));
