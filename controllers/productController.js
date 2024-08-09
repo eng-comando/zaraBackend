@@ -2,7 +2,6 @@ const Product = require("../models/Product");
 const User = require("../models/User"); 
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const puppeteer = require('puppeteer');
 const asyncHandler = require("express-async-handler");
 
 exports.init = asyncHandler(async (req, res, next) => {
@@ -191,37 +190,3 @@ exports.deleteProduct = async (req, res) => {
         res.status(500).json({ message: 'Erro ao excluir o produto', error });
     }
 };
-
-exports.scrapeProduct = async (req, res) => {
-    const { url } = req.body;
-
-    try {
-      const browser = await puppeteer.launch({ headless: false });
-      const page = await browser.newPage();
-  
-      await page.goto(url, { waitUntil: 'networkidle2' });
-  
-      await page.waitForSelector('#onetrust-accept-btn-handler', { visible: true }); 
-      await page.click('#onetrust-accept-btn-handler'); 
-  
-      await page.waitForSelector('.product-size-info__main-label', { visible: true });
-  
-      const sizes = await page.evaluate(() => {
-        // Obter todos os tamanhos
-        const allSizes = Array.from(document.querySelectorAll('.product-size-info__main-label'))
-          .map(size => size.textContent.trim());
-        
-        const excludedSizes = new Set(Array.from(document.querySelectorAll('.size-selector-list__item--out-of-stock .product-size-info__main-label'))
-          .map(size => size.textContent.trim()));
-        
-        return allSizes.filter(size => !excludedSizes.has(size));
-      });
-  
-      await browser.close();
-  
-      res.json({ sizes });
-    } catch (error) {
-      console.error('Error scraping product:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  };

@@ -29,6 +29,4 @@ router.delete('/product/:productId', productController.deleteProduct);
 
 router.get('/product/:productId', productController.getProductDetails);
 
-router.post('/scrape', productController.scrapeProduct);
-
 module.exports = router;
