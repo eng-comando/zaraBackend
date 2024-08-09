@@ -4,7 +4,10 @@
   "description": "default",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "preinstall": "apt-get update && apt-get install -y wget gnupg ca-certificates libnss3 libgbm-dev",
+    "postinstall": "echo 'Installation complete'"
   },
   "author": "",
   "license": "ISC",
