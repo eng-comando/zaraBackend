@@ -26,6 +26,9 @@ const ProductSchema = new Schema({
         type:String,
         required:true,
     },
+    color: {
+        type:String,
+    },
     new_price:{
         type:Number,
         required:true,

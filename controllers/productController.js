@@ -26,6 +26,7 @@ exports.addproduct = asyncHandler(async (req, res, next) => {
         category:req.body.category,
         type:req.body.type,
         description:req.body.description,
+        color:req.body.color,
         new_price:req.body.new_price,
         old_price:req.body.old_price,
         sizes:req.body.sizes,
@@ -110,6 +111,7 @@ exports.addtocart = [fetchUser, asyncHandler(async (req, res, next) => {
         item.link = req.body.link;
         item.sizes = item.sizes || [];
         item.sizes.push(req.body.size);
+        item.color = req.body.color,
         item.productId = req.body.productId;
 
         userData.cartData[itemId] = item;
@@ -138,6 +140,7 @@ exports.removefromcart = [fetchUser, asyncHandler(async (req, res, next) => {
         userData.cartData[req.body.itemId].price = 0;
         userData.cartData[req.body.itemId].link = "";
         userData.cartData[req.body.itemId].sizes = [];
+        userData.cartData[req.body.itemId].color = "";
         await User.findOneAndUpdate({_id:req.user.id}, {cartData:userData.cartData});
         res.send("Reseted");
     }
