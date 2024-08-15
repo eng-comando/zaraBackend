@@ -7,7 +7,6 @@ const { body, param, validationResult } = require('express-validator');
 
 const secretKey = 'secret_ecom';
 
-// Middleware de autenticação
 const fetchUser = async (req, res, next) => {
     const token = req.header('auth-token');
     if (!token) return res.status(401).json({ errors: "Please authenticate using a valid token" });
@@ -21,7 +20,6 @@ const fetchUser = async (req, res, next) => {
     }
 };
 
-// Validação e sanitização
 const validateProduct = [
     body('name').isString().notEmpty(),
     body('images').isArray(),
@@ -39,7 +37,6 @@ const validateId = [
     param('productId').isMongoId()
 ];
 
-// Middleware para checar erros de validação
 const checkValidation = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
