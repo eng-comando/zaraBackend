@@ -1,195 +1,188 @@
 const Product = require("../models/Product");
-const User = require("../models/User"); 
+const User = require("../models/User");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
+const { body, param, validationResult } = require('express-validator');
+
+const secretKey = 'secret_ecom';
+
+// Middleware de autenticação
+const fetchUser = async (req, res, next) => {
+    const token = req.header('auth-token');
+    if (!token) return res.status(401).json({ errors: "Please authenticate using a valid token" });
+
+    try {
+        const data = jwt.verify(token, secretKey);
+        req.user = data.user;
+        next();
+    } catch (error) {
+        res.status(401).json({ errors: "Invalid token" });
+    }
+};
+
+// Validação e sanitização
+const validateProduct = [
+    body('name').isString().notEmpty(),
+    body('images').isArray(),
+    body('category').isString().notEmpty(),
+    body('type').isString().notEmpty(),
+    body('description').isString().optional(),
+    body('color').isString().optional(),
+    body('new_price').isNumeric(),
+    body('old_price').isNumeric(),
+    body('sizes').isArray().optional(),
+    body('link').isString().optional()
+];
+
+const validateId = [
+    param('productId').isMongoId()
+];
+
+// Middleware para checar erros de validação
+const checkValidation = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    next();
+};
 
 exports.init = asyncHandler(async (req, res, next) => {
     res.send("Express App is Running");
 });
 
-exports.addproduct = asyncHandler(async (req, res, next) => {
+exports.addProduct = [fetchUser, validateProduct, checkValidation, asyncHandler(async (req, res, next) => {
     let products = await Product.find({});
-    let id = 1;
-
-    if(products.length > 0) {
-        let last_product_array = products.slice(-1);
-        let last_product = last_product_array[0];
-
-        id = last_product.id + 1;
-    }
+    let id = products.length > 0 ? products[products.length - 1].id + 1 : 1;
 
     const product = new Product({
-        id:id,
-        name:req.body.name,
-        images:req.body.images,
-        category:req.body.category,
-        type:req.body.type,
-        description:req.body.description,
-        color:req.body.color,
-        new_price:req.body.new_price,
-        old_price:req.body.old_price,
-        sizes:req.body.sizes,
-        link:req.body.link,
+        id,
+        name: req.body.name,
+        images: req.body.images,
+        category: req.body.category,
+        type: req.body.type,
+        description: req.body.description,
+        color: req.body.color,
+        new_price: req.body.new_price,
+        old_price: req.body.old_price,
+        sizes: req.body.sizes,
+        link: req.body.link,
     });
+
     await product.save();
-    console.log("Saved");
+    res.json({ success: true, name: req.body.name });
+})];
 
-    res.json({
-        success:true,
-        name:req.body.name,
-    });
+exports.removeProduct = [fetchUser, asyncHandler(async (req, res, next) => {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ errors: "Product ID is required" });
+
+    await Product.findOneAndDelete({ id });
+    res.json({ success: true });
+})];
+
+exports.allProducts = asyncHandler(async (req, res, next) => {
+    const products = await Product.find({});
+    res.json(products);
 });
 
-exports.removeproduct = asyncHandler(async (req, res, next) => {
-    await Product.findOneAndDelete({id:req.body.id});
-    console.log("Removed");
-    res.json({
-        success: true,
-        name: req.body.name
-    });
+exports.newCollections = asyncHandler(async (req, res, next) => {
+    const products = await Product.find({});
+    const newCollection = products.slice(-8);
+    res.json(newCollection);
 });
 
-exports.allproducts = asyncHandler(async (req, res, next) => {
-    let products = await Product.find({});
-    console.log("All Products Fetched");
-    res.send(products);
+exports.popularInWomen = asyncHandler(async (req, res, next) => {
+    const products = await Product.find({ category: "women" });
+    const popularWomen = products.slice(0, 4);
+    res.json(popularWomen);
 });
 
-exports.newcollections = asyncHandler(async (req, res, next) => {
-    let products = await Product.find({});
-    let newcollection = products.slice(1).slice(-8);
-    res.send(newcollection);
+exports.relatedProducts = asyncHandler(async (req, res, next) => {
+    const { category } = req.body;
+    if (!category) return res.status(400).json({ errors: "Category is required" });
+
+    const products = await Product.find({ category });
+    const relatedProducts = products.slice(0, 4);
+    res.json(relatedProducts);
 });
 
-exports.popularinwomen = asyncHandler(async (req, res, next) => {
-    let products = await Product.find({category:"women"});
-    let popularwomen = products.slice(0,4);
-    res.send(popularwomen);
-});
-exports.relatedproducts = asyncHandler(async (req, res, next) => {
-    let products = await Product.find({category:req.body.category});
-    let relatedProducts = products.slice(0,4);
-    res.send(relatedProducts);
-});
+exports.addToCart = [fetchUser, asyncHandler(async (req, res, next) => {
+    const { itemId, quantityField, name, image, price, link, size, color, productId } = req.body;
 
-const fetchUser = async ( req, res, next) => {
-    const token = req.header('auth-token');
+    if (!itemId || !quantityField) return res.status(400).json({ errors: "Item ID and quantity field are required" });
 
-    if(!token) {
-        res.status(401).send({errors:"Please authenticate using valid token"})
+    const userData = await User.findById(req.user.id);
+    if (!userData) return res.status(404).json({ errors: "User not found" });
+
+    const item = userData.cartData[itemId] || {};
+    item[quantityField] = (item[quantityField] || 0) + 1;
+    item.name = name;
+    item.image = image;
+    item.price = price;
+    item.link = link;
+    item.sizes = item.sizes || [];
+    item.sizes.push(size);
+    item.color = color;
+    item.productId = productId;
+
+    userData.cartData[itemId] = item;
+    await User.findByIdAndUpdate(req.user.id, { cartData: userData.cartData });
+
+    res.json({ success: "Item added to cart" });
+})];
+
+exports.removeFromCart = [fetchUser, asyncHandler(async (req, res, next) => {
+    const { itemId, quantityField } = req.body;
+
+    if (!itemId || !quantityField) return res.status(400).json({ errors: "Item ID and quantity field are required" });
+
+    const userData = await User.findById(req.user.id);
+    if (!userData) return res.status(404).json({ errors: "User not found" });
+
+    const item = userData.cartData[itemId];
+    if (!item) return res.status(404).json({ errors: "Item not found in cart" });
+
+    if (item[quantityField] > 0) {
+        item[quantityField] -= 1;
+        item.sizes.pop();
+        await User.findByIdAndUpdate(req.user.id, { cartData: userData.cartData });
+        res.json({ success: "Item quantity updated" });
     } else {
-        try {
-            const data = jwt.verify(token, 'secret_ecom');
-            req.user = data.user;
-            next();
-        } catch(error) {
-            res.status(401).send({errors:"Please authenticate using valid token"});
-        }
-    }
-}
-exports.addtocart = [fetchUser, asyncHandler(async (req, res, next) => {
-    try {
-        console.log("Adicionando item:", req.body.itemId);
-
-        const userData = await User.findOne({ _id: req.user.id });
-        if (!userData) {
-            return res.status(404).send('Usuário não encontrado');
-        }
-
-        const itemId = req.body.itemId;
-        const item = userData.cartData[itemId] || {};
-
-        if (!item[req.body.quantityField]) {
-            item[req.body.quantityField] = 0;
-        }
-
-        item.name = req.body.name;
-        item.image = req.body.image;
-        item.price = req.body.price;
-        item[req.body.quantityField] += 1;
-        item.link = req.body.link;
-        item.sizes = item.sizes || [];
-        item.sizes.push(req.body.size);
-        item.color = req.body.color,
-        item.productId = req.body.productId;
-
-        userData.cartData[itemId] = item;
-        await User.findOneAndUpdate({ _id: req.user.id }, { cartData: userData.cartData });
-
-        res.send("Adicionado");
-    } catch (error) {
-        console.error('Erro ao adicionar item ao carrinho:', error);
-        res.status(500).send('Erro interno do servidor');
+        delete userData.cartData[itemId];
+        await User.findByIdAndUpdate(req.user.id, { cartData: userData.cartData });
+        res.json({ success: "Item removed from cart" });
     }
 })];
 
-
-exports.removefromcart = [fetchUser, asyncHandler(async (req, res, next) => {
-    console.log("removed", req.body.itemId);
-    let userData = await User.findOne({_id:req.user.id});
-    const quantityField = req.body.quantityField;
-    if(userData.cartData[req.body.itemId][quantityField] > 0) {
-        userData.cartData[req.body.itemId][quantityField] -= 1;
-        userData.cartData[req.body.itemId].sizes.pop();
-        await User.findOneAndUpdate({_id:req.user.id}, {cartData:userData.cartData});
-        res.send("Removed");
-    } else {
-        userData.cartData[req.body.itemId].name = "";
-        userData.cartData[req.body.itemId].image = "";
-        userData.cartData[req.body.itemId].price = 0;
-        userData.cartData[req.body.itemId].link = "";
-        userData.cartData[req.body.itemId].sizes = [];
-        userData.cartData[req.body.itemId].color = "";
-        await User.findOneAndUpdate({_id:req.user.id}, {cartData:userData.cartData});
-        res.send("Reseted");
-    }
-})];
-exports.getcart = [fetchUser, asyncHandler(async (req, res, next) => {
-    console.log("GetCart");
-    let userData = await User.findOne({_id:req.user.id});
+exports.getCart = [fetchUser, asyncHandler(async (req, res, next) => {
+    const userData = await User.findById(req.user.id);
     res.json(userData.cartData);
 })];
 
-exports.getProductDetails = async (req, res) => {
+exports.getProductDetails = [param('productId').isMongoId(), checkValidation, asyncHandler(async (req, res, next) => {
     const { productId } = req.params;
 
-    try {
-        const product = await Product.findById(productId);
-        if (!product) {
-            return res.status(404).json({ message: 'Produto não encontrado' });
-        }
-        res.status(200).json(product);
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao obter o produto', error });
-    }
-};
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-exports.updateProduct = async (req, res) => {
+    res.json(product);
+})];
+
+exports.updateProduct = [param('productId').isMongoId(), checkValidation, asyncHandler(async (req, res, next) => {
     const { productId } = req.params;
     const updatedData = req.body;
 
-    try {
-        const product = await Product.findByIdAndUpdate(productId, updatedData, { new: true });
-        if (!product) {
-            return res.status(404).json({ message: 'Produto não encontrado' });
-        }
-        res.status(200).json(product);
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao atualizar o produto', error });
-    }
-};
+    const product = await Product.findByIdAndUpdate(productId, updatedData, { new: true });
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-exports.deleteProduct = async (req, res) => {
+    res.json(product);
+})];
+
+exports.deleteProduct = [param('productId').isMongoId(), checkValidation, asyncHandler(async (req, res, next) => {
     const { productId } = req.params;
 
-    try {
-        const product = await Product.findByIdAndDelete(productId);
-        if (!product) {
-            return res.status(404).json({ message: 'Produto não encontrado' });
-        }
-        res.status(200).json({ message: 'Produto excluído com sucesso' });
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao excluir o produto', error });
-    }
-};
+    const product = await Product.findByIdAndDelete(productId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    res.json({ message: 'Product deleted successfully' });
+})];
