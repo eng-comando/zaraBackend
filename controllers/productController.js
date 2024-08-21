@@ -4,11 +4,46 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 
+const SECRET_KEY = "chidumanhane"; 
+
 exports.init = asyncHandler(async (req, res, next) => {
     res.send("Express App is Running");
 });
 
-exports.addproduct = asyncHandler(async (req, res, next) => {
+
+const fetchUser = async ( req, res, next) => {
+    const token = req.header('auth-token');
+
+    if(!token) {
+        res.status(401).send({errors:"Please authenticate using valid token"})
+    } else {
+        try {
+            const data = jwt.verify(token, 'secret_ecom');
+            req.user = data.user;
+            next();
+        } catch(error) {
+            res.status(401).send({errors:"Please authenticate using valid token"});
+        }
+    }
+};
+
+const authAdmin = (req, res, next) => {
+    const token = req.header("Authorization").replace("Bearer ", "");
+
+    if (!token) {
+        return res.status(401).json({ message: "Acesso negado" });
+    }
+
+    try {
+        const verified = jwt.verify(token, SECRET_KEY);
+        req.user = verified;
+        next();
+    } catch (error) {
+        res.status(400).json({ message: "Token inválido" });
+    }
+};
+
+exports.addproduct = [authAdmin, asyncHandler(async (req, res, next) => {
     let products = await Product.find({});
     let id = 1;
 
@@ -39,16 +74,47 @@ exports.addproduct = asyncHandler(async (req, res, next) => {
         success:true,
         name:req.body.name,
     });
-});
+})];
 
-exports.removeproduct = asyncHandler(async (req, res, next) => {
+exports.removeproduct = [authAdmin, asyncHandler(async (req, res, next) => {
     await Product.findOneAndDelete({id:req.body.id});
     console.log("Removed");
     res.json({
         success: true,
         name: req.body.name
     });
-});
+})];
+
+//replay
+exports.deleteProduct = [authAdmin, asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+
+    try {
+        const product = await Product.findByIdAndDelete(productId);
+        if (!product) {
+            return res.status(404).json({ message: 'Produto não encontrado' });
+        }
+        res.status(200).json({ message: 'Produto excluído com sucesso' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao excluir o produto', error });
+    }
+})];
+
+exports.updateProduct = [authAdmin, asyncHandler(async (req, res, next) => {
+    const { productId } = req.params;
+    const updatedData = req.body;
+
+    try {
+        const product = await Product.findByIdAndUpdate(productId, updatedData, { new: true });
+        if (!product) {
+            return res.status(404).json({ message: 'Produto não encontrado' });
+        }
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao atualizar o produto', error });
+    }
+})];
+
 
 exports.allproducts = asyncHandler(async (req, res, next) => {
     let products = await Product.find({});
@@ -73,21 +139,6 @@ exports.relatedproducts = asyncHandler(async (req, res, next) => {
     res.send(relatedProducts);
 });
 
-const fetchUser = async ( req, res, next) => {
-    const token = req.header('auth-token');
-
-    if(!token) {
-        res.status(401).send({errors:"Please authenticate using valid token"})
-    } else {
-        try {
-            const data = jwt.verify(token, 'secret_ecom');
-            req.user = data.user;
-            next();
-        } catch(error) {
-            res.status(401).send({errors:"Please authenticate using valid token"});
-        }
-    }
-}
 exports.addtocart = [fetchUser, asyncHandler(async (req, res, next) => {
     try {
         console.log("Adicionando item:", req.body.itemId);
@@ -162,34 +213,5 @@ exports.getProductDetails = async (req, res) => {
         res.status(200).json(product);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao obter o produto', error });
-    }
-};
-
-exports.updateProduct = async (req, res) => {
-    const { productId } = req.params;
-    const updatedData = req.body;
-
-    try {
-        const product = await Product.findByIdAndUpdate(productId, updatedData, { new: true });
-        if (!product) {
-            return res.status(404).json({ message: 'Produto não encontrado' });
-        }
-        res.status(200).json(product);
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao atualizar o produto', error });
-    }
-};
-
-exports.deleteProduct = async (req, res) => {
-    const { productId } = req.params;
-
-    try {
-        const product = await Product.findByIdAndDelete(productId);
-        if (!product) {
-            return res.status(404).json({ message: 'Produto não encontrado' });
-        }
-        res.status(200).json({ message: 'Produto excluído com sucesso' });
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao excluir o produto', error });
     }
 };
