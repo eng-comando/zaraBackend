@@ -23,7 +23,8 @@ const authAdmin = (req, res, next) => {
   }
 };
 
-exports.order = [authAdmin, asyncHandler(async (req, res, next) => {
+//Aranjar maneira de autenticar se quem fez o pagamento e' quem esta fazer o pedido
+exports.order = asyncHandler(async (req, res, next) => {
     const items = req.body.items;
 
     const cartItems = await Promise.all(items.map(async (itemData) => {
@@ -52,7 +53,7 @@ exports.order = [authAdmin, asyncHandler(async (req, res, next) => {
     await order.save();
 
     res.send("Added");
-})];
+});
 
 exports.allorders = [authAdmin, asyncHandler(async (req, res, next) => {
     let orders = await Order.find({});
