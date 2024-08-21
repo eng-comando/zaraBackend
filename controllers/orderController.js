@@ -4,7 +4,25 @@ const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
 const nodemailer = require('nodemailer');
 
-exports.order = asyncHandler(async (req, res, next) => {
+const SECRET_KEY = "chidumanhane"; 
+
+const authAdmin = (req, res, next) => {
+  const token = req.header("Authorization").replace("Bearer ", "");
+
+  if (!token) {
+      return res.status(401).json({ message: "Acesso negado" });
+  }
+
+  try {
+      const verified = jwt.verify(token, SECRET_KEY);
+      req.user = verified;
+      next();
+  } catch (error) {
+      res.status(400).json({ message: "Token inválido" });
+  }
+};
+
+exports.order = [authAdmin, asyncHandler(async (req, res, next) => {
     const items = req.body.items;
 
     const cartItems = await Promise.all(items.map(async (itemData) => {
@@ -33,14 +51,14 @@ exports.order = asyncHandler(async (req, res, next) => {
     await order.save();
 
     res.send("Added");
-});
+})];
 
-exports.allorders = asyncHandler(async (req, res, next) => {
+exports.allorders = [authAdmin, asyncHandler(async (req, res, next) => {
     let orders = await Order.find({});
     res.send(orders);
-});
+})];
 
-exports.getOrderById = asyncHandler(async (req, res, next) => {
+exports.getOrderById = [authAdmin, asyncHandler(async (req, res, next) => {
     try {
       const orderId = req.params.id;
   
@@ -55,9 +73,9 @@ exports.getOrderById = asyncHandler(async (req, res, next) => {
       console.error(error);
       res.status(500).json({ message: 'Server error' });
     }
-  });
+  })];
 
-  exports.deleteOrder = asyncHandler(async (req, res, next) => {
+  exports.deleteOrder = [authAdmin, asyncHandler(async (req, res, next) => {
       try{
         const orderId = req.params.id;
 
@@ -76,9 +94,10 @@ exports.getOrderById = asyncHandler(async (req, res, next) => {
         console.error('Error deleting order:', error);
         res.status(500).json({ message: 'Server error'});
       }
-  });
+  })];
 
-  exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
+  
+  exports.updateOrderStatus = [authAdmin, asyncHandler(async (req, res, next) => {
     const { id } = req.params; 
     const { status } = req.body;
 
@@ -94,4 +113,4 @@ exports.getOrderById = asyncHandler(async (req, res, next) => {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
-  });
+  })];
