@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const axios = require('axios');
 const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
+const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
 const SECRET_KEY = "chidumanhane"; 
