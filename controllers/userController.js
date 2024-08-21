@@ -3,7 +3,7 @@ const Admin = require("../models/Admin");
 
 const asyncHandler = require("express-async-handler");
 const jwt = require('jsonwebtoken');
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 
 const SECRET_KEY = "chidumanhane"; 
