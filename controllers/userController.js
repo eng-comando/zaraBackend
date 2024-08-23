@@ -8,87 +8,92 @@ const bcrypt = require("bcryptjs");
 
 const SECRET_KEY = "chidumanhane"; 
 
-exports.signup = asyncHandler(async (req, res, next) => {
-    let check = await User.findOne({email:req.body.email});
+const generateToken = (id) => {
+    return jwt.sign({ id }, SECRET_KEY, { expiresIn: '6h' });
+};
 
-    if(check) {
-        return res.status(400).json({sucess:false, error:"Existing user found with same email"});
-    }
-
-    let cart = {};
-    for (let i = 0; i < 300; i++) {
-        cart[i] = {
-            name: "",
-            image: "",
-            price: 0,   
-            quantity: 0,   
-            link: "",
-            sizes:[]
-        };
-    }
-
-    const user = new User({
-        name:req.body.username,
-        email:req.body.email,
-        phoneNumber:"",
-        password:req.body.password,
-        cartData:cart,
-    });
-
-    await user.save();
-    
-    const data = {
-        user:{
-            id:user.id
-        }
-    }
-
-    const token = jwt.sign(data,'secret_ecom');
-    res.json({success:true, token});
-});
-
-
-exports.login = asyncHandler(async (req, res, next) => {
-    let user = await User.findOne({email:req.body.email});
-
-    if(user) {
-        const passCompare = req.body.password === user.password;
-        if (passCompare) {
-            const data = {
-                user:{
-                    id:user.id
-                }
-            }
-            const token = jwt.sign(data, 'secret_ecom');
-            
-            res.json({success:true, token});
-        } else {
-            res.json({success:false, errors:"Wrong Password"});
-        }
-    } else {
-        res.json({success:false, errors:"Wrong Email Id"});
-    }
-});
-
-
-exports.loginAdmin = asyncHandler(async (req, res) => {
-    const { username, password } = req.body;
+exports.signup = asyncHandler(async (req, res) => {
 
     try {
+        const { username, email, password } = req.body;
+        let user = await User.findOne({ email });
+        if (user) {
+            return res.status(400).json({ success: false, error: "User already exists with the same email" });
+        }
+
+        let cart = {};
+        for (let i = 0; i < 300; i++) {
+            cart[i] = {
+                name: "",
+                image: "",
+                price: 0,
+                quantity: 0,
+                link: "",
+                sizes: []
+            };
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        user = new User({
+            name: username,
+            email,
+            phoneNumber: "",
+            password: hashedPassword,
+            cartData: cart,
+        });
+
+        await user.save();
+
+        const token = generateToken(user.id);
+
+        res.status(201).json({ success: true, token });
+
+    } catch (error) {
+        console.error('Signup error:', error);
+        res.status(500).json({ success: false, message: "Server error", error: error.message });
+    }
+});
+
+exports.login = asyncHandler(async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        
+        if (!user) {
+            return res.status(400).json({ success: false, error: "Invalid email or password" });
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, error: "Invalid email or password" });
+        }
+
+        const token = generateToken(user.id);
+
+        res.json({ success: true, token });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ success: false, message: "Server error", error: error.message });
+    }
+});
+
+exports.loginAdmin = asyncHandler(async (req, res) => {
+    try {
+        const { username, password } = req.body;
         const admin = await Admin.findOne({ username });
+
         if (!admin) {
             return res.status(400).json({ message: "Usuário não encontrado" });
         }
-        console.log(admin.password);
-        console.log(password);
+
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) {
             return res.status(400).json({ message: "Senha incorreta" });
         }
 
-        const token = jwt.sign({ id: admin._id, username: admin.username }, SECRET_KEY, {
-            expiresIn: "6h",
-        });
+        const token = generateToken(admin._id);
 
         res.json({ token });
 
@@ -99,10 +104,10 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
 });
 
 exports.signupAdmin = asyncHandler(async (req, res) => {
-    const { username, password } = req.body;
-
     try {
+        const { username, password } = req.body;
         const existingAdmin = await Admin.findOne({ username });
+
         if (existingAdmin) {
             return res.status(400).json({ message: "Usuário já existe" });
         }
