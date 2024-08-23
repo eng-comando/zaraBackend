@@ -8,10 +8,6 @@ const bcrypt = require("bcryptjs");
 
 const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
 
-const generateToken = (id) => {
-    return jwt.sign({ id }, SECRET_KEY, { expiresIn: '6h' });
-};
-
 exports.signup = asyncHandler(async (req, res) => {
 
     try {
@@ -79,7 +75,7 @@ exports.login = asyncHandler(async (req, res) => {
                 id:user.id
             }
         }
-        const token = jwt.sign(data, SECRET_KEY, , { expiresIn: '6h' });
+        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '6h' });
 
         res.json({ success: true, token });
 
@@ -103,7 +99,9 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "Senha incorreta" });
         }
 
-        const token = generateToken(admin._id);
+        const token = jwt.sign({ id: admin._id, username: admin.username }, SECRET_KEY, {
+            expiresIn: "6h",
+        });
 
         res.json({ token });
 
