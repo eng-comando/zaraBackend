@@ -30,7 +30,7 @@ const fetchUser = async (req, res, next) => {
 
 const authAdmin = (req, res, next) => {
     try {
-        const token = req.header("Authorization").replace("Bearer ", "");
+        const token = req.header("Authorization")?.replace("Bearer ", "");
 
         if (!token) {
             return res.status(401).json({ message: "Acesso negado" });
