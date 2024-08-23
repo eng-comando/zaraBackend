@@ -89,19 +89,6 @@ exports.addproduct = [authAdmin,
     })
 ];
 
-exports.removeproduct = [authAdmin, asyncHandler(async (req, res) => {
-    try {
-        const { id } = req.body;
-        const result = await Product.findOneAndDelete({ id });
-        if (!result) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-        res.json({ success: true, name: req.body.name });
-    } catch (error) {
-        res.status(500).json({ message: 'Error removing product', error });
-    }
-})];
-
 exports.deleteProduct = [authAdmin, asyncHandler(async (req, res) => {
     try {
         const { productId } = req.params;

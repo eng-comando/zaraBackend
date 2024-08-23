@@ -65,15 +65,16 @@ const transporter = nodemailer.createTransport({
       pass: 'Aniana@2017'
     }
 });
-exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
-    const mailOptions = {
-        from: 'noreply@zara-mz.shop',
-        to: req.body.recipientEmail,
-        subject: req.body.subject,
-        html: req.body.html
-    };
 
+exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
     try {
+        const mailOptions = {
+            from: 'noreply@zara-mz.shop',
+            to: req.body.recipientEmail,
+            subject: req.body.subject,
+            html: req.body.html
+        };
+    
         await transporter.sendMail(mailOptions);
     } catch (error) {
         console.error('Erro ao enviar e-mail: ', error);

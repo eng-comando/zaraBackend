@@ -7,8 +7,6 @@ router.get('/', productController.init);
 
 router.post('/addproduct', productController.addproduct);
 
-router.post('/removeproduct', productController.removeproduct);
-
 router.get('/allproducts', productController.allproducts);
 
 router.get('/newcollections', productController.newcollections);
