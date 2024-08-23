@@ -29,4 +29,6 @@ router.delete('/product/:productId', productController.deleteProduct);
 
 router.get('/product/:productId', productController.getProductDetails);
 
+router.get('/verifyToken', productController.verifyToken);
+
 module.exports = router;

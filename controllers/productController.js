@@ -43,6 +43,10 @@ const authAdmin = (req, res, next) => {
     }
 };
 
+exports.verifyToken = [authAdmin, asyncHandler(async (req, res, next) => {
+    res.json({ message: "Token valido"});
+})];
+
 exports.addproduct = [authAdmin, asyncHandler(async (req, res, next) => {
     let products = await Product.find({});
     let id = 1;
