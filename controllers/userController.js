@@ -46,7 +46,12 @@ exports.signup = asyncHandler(async (req, res) => {
 
         await user.save();
 
-        const token = generateToken(user.id);
+        const data = {
+            user:{
+                id:user.id
+            }
+        }
+        const token = jwt.sign(data, SECRET_KEY, , { expiresIn: '6h' });
 
         res.status(201).json({ success: true, token });
 
@@ -69,7 +74,12 @@ exports.login = asyncHandler(async (req, res) => {
             return res.status(400).json({ success: false, error: "Invalid email or password" });
         }
 
-        const token = generateToken(user.id);
+        const data = {
+            user:{
+                id:user.id
+            }
+        }
+        const token = jwt.sign(data, SECRET_KEY, , { expiresIn: '6h' });
 
         res.json({ success: true, token });
 
