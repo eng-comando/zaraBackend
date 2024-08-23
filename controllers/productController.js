@@ -5,7 +5,8 @@ const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require('express-validator');
 
-const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
+//const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
+const SECRET_KEY = "chidumanhane";
 
 exports.init = asyncHandler(async (req, res, next) => {
     res.send("Express App is Running");
@@ -28,31 +29,21 @@ const fetchUser = async (req, res, next) => {
 };
 
 
-const authAdmin = asyncHandler(async (req, res, next) => {
+const authAdmin = (req, res, next) => {
     try {
-        const token = req.header("Authorization")?.replace("Bearer ", "");
+        const token = req.header("Authorization").replace("Bearer ", "");
+
         if (!token) {
-            return res.status(401).json({ message: "Access denied: No token provided" });
+            return res.status(401).json({ message: "Acesso negado" });
         }
 
         const verified = jwt.verify(token, SECRET_KEY);
         req.user = verified;
-
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ message: "Forbidden: User is not an admin" });
-        }
-
         next();
     } catch (error) {
-        if (error.name === 'JsonWebTokenError') {
-            return res.status(400).json({ message: "Invalid token", error: error.message });
-        } else if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ message: "Token expired", error: error.message });
-        } else {
-            return res.status(500).json({ message: "Internal Server Error", error: error.message });
-        }
+        res.status(400).json({ message: "Token inválido" });
     }
-});
+};
 
 exports.verifyToken = [authAdmin, asyncHandler(async (req, res) => {
     try {
