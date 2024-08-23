@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require("bcryptjs");
 
 
-const SECRET_KEY = "chidumanhane"; 
+const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
 
 const generateToken = (id) => {
     return jwt.sign({ id }, SECRET_KEY, { expiresIn: '6h' });
@@ -60,7 +60,7 @@ exports.login = asyncHandler(async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        
+
         if (!user) {
             return res.status(400).json({ success: false, error: "Invalid email or password" });
         }
