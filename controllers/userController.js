@@ -51,7 +51,7 @@ exports.signup = asyncHandler(async (req, res) => {
                 id:user.id
             }
         }
-        const token = jwt.sign(data, SECRET_KEY, , { expiresIn: '6h' });
+        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '6h' });
 
         res.status(201).json({ success: true, token });
 
