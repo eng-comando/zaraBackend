@@ -5,8 +5,7 @@ const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require('express-validator');
 
-//const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
-const SECRET_KEY = "chidumanhane";
+const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
 
 exports.init = asyncHandler(async (req, res, next) => {
     res.send("Express App is Running");
@@ -66,23 +65,41 @@ exports.addproduct = [authAdmin,
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
+                console.log( errors.array());
                 return res.status(400).json({ errors: errors.array() });
             }
 
+            let products = await Product.find({});
+            let id = 1;
+        
+            if(products.length > 0) {
+                let last_product_array = products.slice(-1);
+                let last_product = last_product_array[0];
+        
+                id = last_product.id + 1;
+            }
+        
             const product = new Product({
-                name: req.body.name,
-                images: req.body.images,
-                category: req.body.category,
-                type: req.body.type,
-                description: req.body.description,
-                color: req.body.color,
-                new_price: req.body.new_price,
-                old_price: req.body.old_price,
-                sizes: req.body.sizes,
-                link: req.body.link,
+                id:id,
+                name:req.body.name,
+                images:req.body.images,
+                category:req.body.category,
+                type:req.body.type,
+                description:req.body.description,
+                color:req.body.color,
+                new_price:req.body.new_price,
+                old_price:req.body.old_price,
+                sizes:req.body.sizes,
+                link:req.body.link,
             });
             await product.save();
-            res.json({ success: true, name: req.body.name });
+            console.log("Saved");
+        
+            res.json({
+                success:true,
+                name:req.body.name,
+                messge:"Product added"
+            });
         } catch (error) {
             res.status(500).json({ message: 'Error adding product', error });
         }
