@@ -13,12 +13,17 @@ const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const processOrderRoutes = require('./routes/processOrderRoutes');
+require('dotenv').config();
+
+const API_HOST = process.env.API_HOST;
+const PASSWORD_MONGO = process.env.PASSWORD_MONGO;
+const CLUSTER = process.env.CLUSTER;
 
 app.use(express.json());
 app.use(cors());
 
 // Database Connection With MongoDB
-mongoose.connect("mongodb+srv://edsonanibal:"+ encodeURIComponent("Aniana@2017")+"@cluster0.zo043lu.mongodb.net/EC-SHOPP");
+mongoose.connect("mongodb+srv://edsonanibal:"+ encodeURIComponent(PASSWORD_MONGO)+CLUSTER);
 
 app.use('/', productRoutes);
 app.use('/', userRoutes);
@@ -41,7 +46,7 @@ const upload = multer({storage: storage});
 app.use("/images", express.static("upload/images"));
 
 app.post("/upload", upload.array('image'), (req, res) => {
-    const imageUrls = req.files.map(file => `https://zarabackend-22s0.onrender.com/images/${file.filename}`);
+    const imageUrls = req.files.map(file => `${API_HOST}/images/${file.filename}`);
     
     res.json({
         success: 1,
