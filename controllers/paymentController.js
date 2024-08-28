@@ -4,6 +4,14 @@ const axios = require('axios');
 const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
 const nodemailer = require('nodemailer');
+require('dotenv').config();
+
+const SECRET_KEY = process.env.SECRET_KEY;
+const HOST = process.env.HOST;
+const EMAIL = process.env.EMAIL;
+const PASSWORD = process.env.PASSWORD;
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
 exports.token = asyncHandler(async (req, res, next) => {
     try {
@@ -12,7 +20,7 @@ exports.token = asyncHandler(async (req, res, next) => {
             exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7)
         };
 
-        const token = jwt.sign(data, 'secret_ecom');
+        const token = jwt.sign(data, SECRET_KEY);
         res.json({token: token});
     } catch (error) {
         console.error('Erro ao gerar token:', error);
@@ -24,8 +32,8 @@ exports.payment = asyncHandler(async (req, res, next) => {
     try {
         const tokenResponse = await axios.post('https://e2payments.explicador.co.mz/oauth/token', {
             grant_type: 'client_credentials',
-            client_id: '9bd4abf6-fb1d-4563-bcef-fbf3c8c4bbca',
-            client_secret: 'HrL7aHlpEDL9G8wyoAEoysXCiGA1G0OAgNmLcE9t'
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET
         });
 
         const accessToken = tokenResponse.data.access_token;
@@ -57,19 +65,19 @@ exports.payment = asyncHandler(async (req, res, next) => {
 });
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.hostinger.com', 
+    host: HOST, 
     port: 587, 
     secure: false, 
     auth: {
-      user: 'noreply@zara-mz.shop', 
-      pass: 'Aniana@2017'
+      user: EMAIL, 
+      pass: PASSWORD
     }
 });
 
 exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
     try {
         const mailOptions = {
-            from: 'noreply@zara-mz.shop',
+            from: HOST,
             to: req.body.recipientEmail,
             subject: req.body.subject,
             html: req.body.html
