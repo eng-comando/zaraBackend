@@ -111,6 +111,7 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
     }
 });
 
+/*
 exports.signupAdmin = asyncHandler(async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -137,3 +138,4 @@ exports.signupAdmin = asyncHandler(async (req, res) => {
         res.status(500).json({ message: "Erro no servidor" });
     }
 });
+*/

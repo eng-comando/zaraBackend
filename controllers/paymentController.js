@@ -46,7 +46,7 @@ exports.payment = asyncHandler(async (req, res, next) => {
             "Content-Type": "application/json"
         };
         const payloadC2b = {
-            "client_id": "9bd4abf6-fb1d-4563-bcef-fbf3c8c4bbca",
+            "client_id": CLIENT_ID,
             "amount": req.body.amount,
             "phone": req.body.phone,
             "reference": "PagamentoZaraMZ"
