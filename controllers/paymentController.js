@@ -77,7 +77,7 @@ const transporter = nodemailer.createTransport({
 exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
     try {
         const mailOptions = {
-            from: HOST,
+            from: EMAIL,
             to: req.body.recipientEmail,
             subject: req.body.subject,
             html: req.body.html
