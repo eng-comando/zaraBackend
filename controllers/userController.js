@@ -4,9 +4,9 @@ const Admin = require("../models/Admin");
 const asyncHandler = require("express-async-handler");
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcryptjs");
+require('dotenv').config();
 
-
-const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
+const SECRET_KEY = process.env.SECRET_KEY;
 
 exports.signup = asyncHandler(async (req, res) => {
 

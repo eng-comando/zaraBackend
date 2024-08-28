@@ -4,8 +4,9 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require('express-validator');
+require('dotenv').config();
 
-const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
+const SECRET_KEY = process.env.SECRET_KEY;
 
 exports.init = asyncHandler(async (req, res, next) => {
     res.send("Express App is Running");

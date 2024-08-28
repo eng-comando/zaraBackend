@@ -4,8 +4,9 @@ const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 
-const SECRET_KEY = process.env.SECRET_KEY || "chidumanhane";
+const SECRET_KEY = process.env.SECRET_KEY;
 
 const authAdmin = (req, res, next) => {
   try {
