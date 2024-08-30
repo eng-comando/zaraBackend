@@ -1,5 +1,7 @@
 const Product = require("../models/Product");
 const User = require("../models/User");
+const Popular = require("../models/Popular");
+const NewCollection = require("../models/NewCollection");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
@@ -147,9 +149,15 @@ exports.allproducts = asyncHandler(async (req, res) => {
 
 exports.newcollections = asyncHandler(async (req, res) => {
     try {
-        const products = await Product.find({});
-        const newcollection = products.slice(-8);
-        res.json(newcollection);
+       const newCollection = await NewCollection.findOne();
+
+       if(!newCollection) {
+            return res.status(404).json({ message: 'New Collection not found'});
+       } else {
+            const products = await Product.find({ 'id': { $in: newCollection.ids} });
+
+            res.json(products);
+       }
     } catch (error) {
         res.status(500).json({ message: 'Error fetching new collections', error });
     }
@@ -157,9 +165,19 @@ exports.newcollections = asyncHandler(async (req, res) => {
 
 exports.popularinwomen = asyncHandler(async (req, res) => {
     try {
-        const products = await Product.find({ category: "women" });
-        const popularwomen = products.slice(0, 4);
-        res.json(popularwomen);
+        const popular = await Popular.findOne();
+
+        if (!popular) {
+            return res.status(404).json({ message: 'Popular products not found' });
+        } else {
+            const products = await Product.find({ 
+                'id': { $in: popular.ids },
+                category: 'women'
+            });
+            const popularWomenProducts = products.slice(0, 4);
+    
+            res.json(popularWomenProducts);
+        }
     } catch (error) {
         res.status(500).json({ message: 'Error fetching popular women products', error });
     }
@@ -174,6 +192,62 @@ exports.relatedproducts = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Error fetching related products', error });
     }
 });
+
+exports.popularAndNewCollectionIds = asyncHandler(async (req, res) => {
+    try {
+        const popularProducts = await Popular.findOne();
+        const newCollection = await NewCollection.findOne();
+
+        res.json({
+            popularProducts: popularProducts ? popularProducts.ids : [],
+            newCollection: newCollection ? newCollection.ids : []
+        });
+    } catch(error) {
+        console.error('Error fetching data from backend:', error);
+        res.status(500).json({ error: 'Error fetching data from backend' });
+    }
+});
+
+exports.popular = asyncHandler(async (req, res) => {
+    try {
+        const { popularProducts } = req.body;
+        let popular = await Popular.findOne();
+
+        if(popular) {
+            popular.ids = popularProducts;
+            await popular.save();
+        } else {
+            popular = new Popular({ ids: popularProducts });
+            await popular.save();
+        }
+
+        res.json({ message: 'Popular Products updated successfully!' });
+    } catch (error) {
+    console.error('Error updating Popular Products:', error);
+    res.status(500).json({ error: 'Error updating Popular Products' });
+  }
+});
+
+exports.newCollection = asyncHandler(async (req, res) => {
+    try {
+        const { newCollections } = req.body;
+        let newCollection = await NewCollection.findOne();
+
+        if (newCollection) {
+        newCollection.ids = newCollections;
+        await newCollection.save();
+        } else {
+        newCollection = new NewCollection({ ids: newCollections });
+        await newCollection.save();
+        }
+
+        res.json({ message: 'New Collections updated successfully!' });
+    } catch (error) {
+        console.error('Error updating New Collections:', error);
+        res.status(500).json({ error: 'Error updating New Collections' });
+      }
+    });
+
 
 exports.addtocart = [fetchUser, asyncHandler(async (req, res) => {
     try {

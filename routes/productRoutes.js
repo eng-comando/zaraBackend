@@ -29,4 +29,10 @@ router.get('/product/:productId', productController.getProductDetails);
 
 router.get('/verifyToken', productController.verifyToken);
 
+router.get('/popularAndNewCollectionIds', productController.popularAndNewCollectionIds);
+
+router.post('/popular', productController.popular);
+
+router.post('/newCollection', productController.newCollection);
+
 module.exports = router;
