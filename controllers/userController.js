@@ -70,7 +70,7 @@ exports.signup = asyncHandler(async (req, res) => {
                     return res.status(500).json({ success: false, error: 'Erro ao reenviar e-mail de verificação' });
                 }
 
-                return res.status(200).json({ success: true, message: "Usuário já existente, mas não verificado. Verifique seu e-mail para o novo código de verificação." });
+                return res.status(200).json({ success: true, message: "Usuário já existente, mas não verificado. Verifique seu e-mail com o novo código de verificação." });
             } else {
                 return res.status(400).json({ success: false, error: "Usuário já existe com o mesmo e-mail" });
             }

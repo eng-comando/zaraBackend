@@ -35,4 +35,6 @@ router.post('/popular', productController.popular);
 
 router.post('/newCollection', productController.newCollection);
 
+router.post('/check-product', productController.checkProductExists);
+
 module.exports = router;
