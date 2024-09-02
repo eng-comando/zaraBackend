@@ -70,7 +70,7 @@ exports.signup = asyncHandler(async (req, res) => {
                     return res.status(500).json({ success: false, error: 'Erro ao reenviar e-mail de verificação' });
                 }
 
-                return res.status(200).json({ success: true, message: "Usuário já existente, mas não verificado. Verifique seu e-mail com o novo código de verificação." });
+                return res.status(200).json({ success: true, message: "Usuário já existente, mas não verificado. Verifique seu e-mail para o novo código de verificação." });
             } else {
                 return res.status(400).json({ success: false, error: "Usuário já existe com o mesmo e-mail" });
             }
@@ -133,6 +133,77 @@ exports.signup = asyncHandler(async (req, res) => {
     }
 });
 
+exports.requestResetPassword = asyncHandler(async (req, res) => {
+    try {
+        const { email } = req.body;
+        let user = await User.findOne({ email });
+
+        const verificationCode = generateVerificationCode();
+    
+        user.verificationCode = verificationCode;
+        await user.save();
+    
+        const mailOptions = {
+            from: EMAIL,
+            to: email,
+            subject: "Código de Verificação para redifinir palavra passe",
+            html: `
+                <p>Olá, ${user.name}!</p>
+                <p>Para avançar com a redifinição da palavra passe, por favor, confirme que és tu com o código abaixo:</p>
+                <p><b>${verificationCode}</b></p>
+                <p>Até já,</p>
+                <p>A equipe ZaraMz</p>
+            `,
+        };
+    
+        try {
+            await transporter.sendMail(mailOptions);
+        } catch (emailError) {
+            console.error('Erro ao reenviar e-mail de verificação:', emailError);
+            return res.status(500).json({ success: false, error: 'Erro ao reenviar e-mail de verificação' });
+        }
+
+        res.status(200).json({ success: true, message: "Verifique seu e-mail para o código de verificação." });
+    } catch (error) {
+        console.error('Erro request reset password:', error);
+        res.status(500).json({ success: false, message: "Erro server: ", error: error.message });
+    }
+    
+});
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+    const { email, verificationCode, newPassword } = req.body;
+
+    try {
+        if (!validatePassword(newPassword)) {
+            return res.status(400).json({ success: false, error: 'A senha deve ter pelo menos um número, uma letra maiúscula e 8 caracteres no mínimo' });
+        }
+
+        
+        let user = await User.findOne({ email });
+        if (!user || Number(user.verificationCode) !== Number(verificationCode)) {
+            return res.status(400).json({ success: false, error: "Código de verificação inválido." });
+        }
+        
+        if(user.isVerified === true) {
+            user.verificationCode = undefined;
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(newPassword, salt);
+            user.password = hashedPassword;
+
+            await user.save();
+            res.status(200).json({ success: true, message: "Senha redefinida com sucesso! Você pode agora entrar." });
+        } else {
+            return res.status(400).json({ success: false, error: "Usuário não completou o registo, por favor complete o registo" });
+        }
+        
+        
+    } catch (error) {
+        console.error('Erro na verificação do código:', error);
+        res.status(500).json({ success: false, message: "Erro no servidor", error: error.message });
+    }
+});
 exports.verifyCode = asyncHandler(async (req, res) => {
     const { email, verificationCode } = req.body;
 

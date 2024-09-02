@@ -11,6 +11,10 @@ router.post('/loginAdmin', userController.loginAdmin);
 
 router.post('/verify-code', userController.verifyCode);
 
+router.post('/request-reset-password', userController.requestResetPassword);
+
+router.post('/reset-password', userController.resetPassword);
+
 //router.post('/signupAdmin', userController.signupAdmin);
 
 module.exports = router;
