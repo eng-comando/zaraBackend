@@ -20,7 +20,7 @@ const authAdmin = (req, res, next) => {
       req.user = verified;
       next();
   } catch (error) {
-      res.status(400).json({ message: "Token inválido" });
+      res.status(400).json({ message: "Invalid token" });
   }
 };
 

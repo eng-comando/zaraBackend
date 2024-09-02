@@ -23,8 +23,8 @@ exports.token = asyncHandler(async (req, res, next) => {
         const token = jwt.sign(data, SECRET_KEY);
         res.json({token: token});
     } catch (error) {
-        console.error('Erro ao gerar token:', error);
-        res.status(400).json({ error: 'Erro ao gerar token' });
+        console.error('Error trying to generate token:', error);
+        res.status(400).json({ error: 'Erro generating token' });
     }
 });
 
@@ -58,7 +58,7 @@ exports.payment = asyncHandler(async (req, res, next) => {
 
         res.send("Transação realizada com sucesso");
     } catch (error) {
-        console.error('Erro ao realizar transação:', error);
+        console.error('Error trying to make payment:', error);
 
         res.send("Erro ao realizar transação");
     }
@@ -85,7 +85,7 @@ exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
     
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        console.error('Erro ao enviar e-mail: ', error);
+        console.error('Error trying to send email: ', error);
         res.send('Erro ao enviar e-mail: ', error);
     }
     res.send('Sent');

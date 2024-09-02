@@ -351,6 +351,6 @@ exports.checkProductExists = async (req, res) => {
             return res.status(200).json({ exists: false, message: 'Produto disponível.' });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Erro ao verificar o produto', error });
+        res.status(500).json({ message: 'Error checking product', error });
     }
 };

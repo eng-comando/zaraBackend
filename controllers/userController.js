@@ -128,8 +128,8 @@ exports.signup = asyncHandler(async (req, res) => {
         res.status(201).json({ success: true, message: "Verifique seu e-mail para o código de verificação." });
 
     } catch (error) {
-        console.error('Erro no signup:', error);
-        res.status(500).json({ success: false, message: "Erro no servidor", error: error.message });
+        console.error('Error trying to signup', error);
+        res.status(500).json({ success: false, message: "Server erro", error: error.message });
     }
 });
 
@@ -166,7 +166,7 @@ exports.requestResetPassword = asyncHandler(async (req, res) => {
         res.status(200).json({ success: true, message: "Verifique seu e-mail para o código de verificação." });
     } catch (error) {
         console.error('Erro request reset password:', error);
-        res.status(500).json({ success: false, message: "Erro server: ", error: error.message });
+        res.status(500).json({ success: false, message: "Server error: ", error: error.message });
     }
     
 });
@@ -200,8 +200,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
         
         
     } catch (error) {
-        console.error('Erro na verificação do código:', error);
-        res.status(500).json({ success: false, message: "Erro no servidor", error: error.message });
+        console.error('Erro trying to reset password:', error);
+        res.status(500).json({ success: false, message: "Server error: ", error: error.message });
     }
 });
 exports.verifyCode = asyncHandler(async (req, res) => {
@@ -226,8 +226,8 @@ exports.verifyCode = asyncHandler(async (req, res) => {
 
         res.status(200).json({ success: true, token });
     } catch (error) {
-        console.error('Erro na verificação do código:', error);
-        res.status(500).json({ success: false, message: "Erro no servidor", error: error.message });
+        console.error('Error trying to verify code:', error);
+        res.status(500).json({ success: false, message: "Server error: ", error: error.message });
     }
 });
 
@@ -255,8 +255,8 @@ exports.login = asyncHandler(async (req, res) => {
         res.json({ success: true, token });
 
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
+        console.error('Error trying to login:', error);
+        res.status(500).json({ success: false, message: "Server error: ", error: error.message });
     }
 });
 
@@ -282,7 +282,7 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Erro no servidor" });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 
