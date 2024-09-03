@@ -13,21 +13,6 @@ const PASSWORD = process.env.PASSWORD;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
-exports.token = asyncHandler(async (req, res, next) => {
-    try {
-        const data = {
-            role: 'guest',
-            exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7)
-        };
-
-        const token = jwt.sign(data, SECRET_KEY);
-        res.json({token: token});
-    } catch (error) {
-        console.error('Error trying to generate token:', error);
-        res.status(400).json({ error: 'Erro generating token' });
-    }
-});
-
 exports.payment = asyncHandler(async (req, res, next) => {
     try {
         const tokenResponse = await axios.post('https://e2payments.explicador.co.mz/oauth/token', {

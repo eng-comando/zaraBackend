@@ -138,6 +138,10 @@ exports.requestResetPassword = asyncHandler(async (req, res) => {
         const { email } = req.body;
         let user = await User.findOne({ email });
 
+        if (!user) {
+            return res.status(400).json({ success: false, error: "Usuário não encontrado" });
+        }
+
         const verificationCode = generateVerificationCode();
     
         user.verificationCode = verificationCode;
@@ -222,7 +226,7 @@ exports.verifyCode = asyncHandler(async (req, res) => {
                 id: user.id
             }
         };
-        const token = jwt.sign(data, process.env.SECRET_KEY, { expiresIn: '6h' });
+        const token = jwt.sign(data, process.env.SECRET_KEY, { expiresIn: '1h' });
 
         res.status(200).json({ success: true, token });
     } catch (error) {
@@ -240,6 +244,11 @@ exports.login = asyncHandler(async (req, res) => {
         if (!user) {
             return res.status(400).json({ success: false, error: "Usuário não encontrado" });
         }
+
+        if(!user.isVerified) {
+            return res.status(400).json({ success: false, error: "Usuário ainda não verificou o email ao se cadastrar" });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ success: false, error: "Senha incorreta" });
@@ -247,10 +256,12 @@ exports.login = asyncHandler(async (req, res) => {
 
         const data = {
             user:{
-                id:user.id
+                id:user.id,
+                name: user.name,
+                email: user.email
             }
         }
-        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '6h' });
+        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '1h' });
 
         res.json({ success: true, token });
 
