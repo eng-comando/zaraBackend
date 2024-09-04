@@ -142,7 +142,9 @@ exports.requestResetPassword = asyncHandler(async (req, res) => {
         if (!user) {
             return res.status(400).json({ success: false, error: "Usuário não encontrado" });
         }
-
+        if (!user.isVerified) {
+            return res.status(400).json({ success: false, error: "Usuário ainda não verificou o email ao cadastrar-se" });
+        }
         const verificationCode = generateVerificationCode();
     
         user.verificationCode = verificationCode;
