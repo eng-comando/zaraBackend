@@ -8,6 +8,7 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const SECRET_KEY = process.env.SECRET_KEY;
+const SECRET_KEY_ADMIN = process.env.SECRET_KEY_ADMIN;
 const EMAIL = process.env.EMAIL;
 const HOST = process.env.HOST;
 const PASSWORD = process.env.PASSWORD;
@@ -285,7 +286,7 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "Senha incorreta" });
         }
 
-        const token = jwt.sign({ id: admin._id, username: admin.username }, SECRET_KEY, {
+        const token = jwt.sign({ id: admin._id, username: admin.username }, SECRET_KEY_ADMIN, {
             expiresIn: "6h",
         });
 

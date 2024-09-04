@@ -1,12 +1,13 @@
 const asyncHandler = require("express-async-handler");
 const axios = require('axios');
 const CartItem = require("../models/CartItem");
+const Payment = require("../models/Payment");
 const Order = require("../models/Order");
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-const SECRET_KEY = process.env.SECRET_KEY;
+const SECRET_KEY_ADMIN = process.env.SECRET_KEY_ADMIN;
 
 const authAdmin = (req, res, next) => {
   try {
@@ -16,7 +17,7 @@ const authAdmin = (req, res, next) => {
           return res.status(401).json({ message: "Acesso negado" });
       }
     
-      const verified = jwt.verify(token, SECRET_KEY);
+      const verified = jwt.verify(token, SECRET_KEY_ADMIN);
       req.user = verified;
       next();
   } catch (error) {
@@ -24,53 +25,63 @@ const authAdmin = (req, res, next) => {
   }
 };
 
-//Aranjar maneira de autenticar se quem fez o pagamento e' quem esta fazer o pedido
 exports.order = asyncHandler(async (req, res) => {
   try {
-    const { items, phoneNumber, callNumber, email, name, status, price } = req.body;
+      const { items, phoneNumber, callNumber, email, name, status, price, transactionId } = req.body;
 
-    if (!items || !Array.isArray(items)) {
-      return res.status(400).json({ message: "Invalid items data" });
-    }
-
-    const cartItems = await Promise.all(items.map(async (itemData) => {
-      const { link, name, price, sizes, color, productId } = itemData;
-      
-      if (!link || !name || !price || !sizes || !productId) {
-        throw new Error('Invalid item data');
+      if (!items || !Array.isArray(items)) {
+          return res.status(400).json({ message: "Dados dos itens inválidos" });
       }
 
-      const cartItem = new CartItem({
-        link,
-        name,
-        price,
-        sizes,
-        color,
-        productId
+      if (!transactionId) {
+          return res.status(400).json({ message: "ID da transação é obrigatório" });
+      }
+
+      const payment = await Payment.findOne({ transactionId: transactionId });
+
+      if (!payment || payment.status !== 'completed' || payment.amount != price || payment.phone != phoneNumber) {
+          return res.status(400).json({ message: "Transação inválida ou incompleta" });
+      }
+
+      const cartItems = await Promise.all(items.map(async (itemData) => {
+          const { link, name, price, sizes, color, productId } = itemData;
+          
+          if (!link || !name || !price || !sizes || !productId) {
+              throw new Error('Dados do item inválidos');
+          }
+
+          const cartItem = new CartItem({
+              link,
+              name,
+              price,
+              sizes,
+              color,
+              productId
+          });
+
+          await cartItem.save();
+          return cartItem;
+      }));
+
+      const order = new Order({
+          items: cartItems.map(cartItem => cartItem._id),
+          phoneNumber,
+          callNumber,
+          email,
+          name,
+          status,
+          price
       });
 
-      await cartItem.save();
-      return cartItem;
-    }));
-
-    const order = new Order({
-      items: cartItems.map(cartItem => cartItem._id),
-      phoneNumber,
-      callNumber,
-      email,
-      name,
-      status,
-      price
-    });
-
-    await order.save();
-    res.status(200).json({ success: true, message: "Order added successfully" });
+      await order.save();
+      res.status(200).json({ success: true, message: "Pedido adicionado com sucesso" });
 
   } catch (error) {
-    console.error('Order creation error:', error);
-    res.status(500).json({ success: false, message: "Failed to place order", error: 'Internal Server Error' });
+      console.error('Server Error:', error);
+      res.status(500).json({ success: false, message: "Falha ao registrar pedido", error: 'Erro Interno do Servidor' });
   }
 });
+
 
 exports.allorders = [authAdmin, asyncHandler(async (req, res) => {
   try {

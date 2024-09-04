@@ -9,6 +9,7 @@ const { body, validationResult } = require('express-validator');
 require('dotenv').config();
 
 const SECRET_KEY = process.env.SECRET_KEY;
+const SECRET_KEY_ADMIN = process.env.SECRET_KEY_ADMIN;
 
 exports.init = asyncHandler(async (req, res, next) => {
     res.send("Express App is Running");
@@ -39,7 +40,7 @@ const authAdmin = (req, res, next) => {
             return res.status(401).json({ message: "Acesso negado" });
         }
 
-        const verified = jwt.verify(token, SECRET_KEY);
+        const verified = jwt.verify(token, SECRET_KEY_ADMIN);
         req.user = verified;
         next();
     } catch (error) {
