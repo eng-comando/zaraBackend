@@ -264,7 +264,7 @@ exports.login = asyncHandler(async (req, res) => {
                 email: user.email
             }
         }
-        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '30s' });
 
         res.json({ success: true, token });
 

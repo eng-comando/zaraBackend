@@ -91,7 +91,7 @@ exports.payment = asyncHandler(async (req, res, next) => {
     } catch (error) {
         console.error('Error trying to make payment:', error);
 
-        res.send("Erro ao realizar transação");
+        res.status(500).send({ success: false, message: "Erro ao realizar transação", error: error.message });
     }
 });
 
