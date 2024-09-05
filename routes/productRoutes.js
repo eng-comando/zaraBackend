@@ -37,4 +37,6 @@ router.post('/newCollection', productController.newCollection);
 
 router.post('/check-product', productController.checkProductExists);
 
+router.get('/adminStats', productController.adminStats);
+
 module.exports = router;

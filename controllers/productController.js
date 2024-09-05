@@ -2,6 +2,7 @@ const Product = require("../models/Product");
 const User = require("../models/User");
 const Popular = require("../models/Popular");
 const NewCollection = require("../models/NewCollection");
+const Admin = require("../models/Admin");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
@@ -12,7 +13,24 @@ const SECRET_KEY = process.env.SECRET_KEY;
 const SECRET_KEY_ADMIN = process.env.SECRET_KEY_ADMIN;
 
 exports.init = asyncHandler(async (req, res, next) => {
-    res.send("Express App is Running");
+    try {
+        const womenCount = await Product.countDocuments({ category: 'women' });
+        const kidCount = await Product.countDocuments({ category: 'kid' });
+        const menCount = await Product.countDocuments({ category: 'men' });
+        const perfumeCount = await Product.countDocuments({ category: 'perfume' });
+
+        res.status(200).json({
+            success: true,
+            counts: {
+                women: womenCount,
+                kid: kidCount,
+                men: menCount,
+                perfume: perfumeCount
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
 });
 
 const fetchUser = async (req, res, next) => {
@@ -56,6 +74,15 @@ exports.verifyToken = [authAdmin, asyncHandler(async (req, res) => {
     }
 })];
 
+exports.adminStats = asyncHandler(async (req, res) => {
+    try {
+        const admins = await Admin.find({}).select('username numProducts');
+        res.json(admins);
+      } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar admins', error });
+      }
+})
+
 exports.addproduct = [authAdmin, 
     body('name').notEmpty().withMessage('Name is required'),
     body('images').isArray().withMessage('Images must be an array'),
@@ -97,6 +124,15 @@ exports.addproduct = [authAdmin,
                 link:req.body.link,
             });
             await product.save();
+
+            const adminId = req.user.id;
+            const admin = await Admin.findById(adminId);
+
+            if (admin) {
+                admin.numProducts = (admin.numProducts || 0) + 1;
+                await admin.save();
+            }
+
             console.log("Saved");
         
             res.json({

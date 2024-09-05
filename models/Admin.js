@@ -10,6 +10,9 @@ const AdminSchema = new Schema({
         type: String,
         required: true,
     },
+    numProducts: {
+        type: Number
+    }
 });
 
 module.exports = mongoose.model("Admin", AdminSchema);
