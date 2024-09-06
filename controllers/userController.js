@@ -229,7 +229,7 @@ exports.verifyCode = asyncHandler(async (req, res) => {
                 id: user.id
             }
         };
-        const token = jwt.sign(data, process.env.SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign(data, process.env.SECRET_KEY, { expiresIn: '6h' });
 
         res.status(200).json({ success: true, token });
     } catch (error) {
@@ -264,7 +264,7 @@ exports.login = asyncHandler(async (req, res) => {
                 email: user.email
             }
         }
-        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '30s' });
+        const token = jwt.sign(data, SECRET_KEY, { expiresIn: '6h' });
 
         res.json({ success: true, token });
 

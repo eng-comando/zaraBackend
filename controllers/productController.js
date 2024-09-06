@@ -76,12 +76,16 @@ exports.verifyToken = [authAdmin, asyncHandler(async (req, res) => {
 
 exports.adminStats = asyncHandler(async (req, res) => {
     try {
-        const admins = await Admin.find({}).select('username numProducts');
+        const admins = await Admin.find({})
+            .select('username numProducts')
+            .sort({ numProducts: -1 }); 
+
         res.json(admins);
-      } catch (error) {
+    } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar admins', error });
-      }
-})
+    }
+});
+
 
 exports.addproduct = [authAdmin, 
     body('name').notEmpty().withMessage('Name is required'),
