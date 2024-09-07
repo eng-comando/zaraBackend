@@ -70,7 +70,8 @@ exports.order = asyncHandler(async (req, res) => {
           email,
           name,
           status,
-          price
+          price,
+          payment
       });
 
       await order.save();

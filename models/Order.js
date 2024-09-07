@@ -1,5 +1,6 @@
-const CartItem = require("./CartItem");
 const mongoose = require("mongoose");
+const CartItem = require("./CartItem");
+const Payment = require("./Payment"); // Importar o modelo de pagamento
 
 const OrderSchema = new mongoose.Schema({
     items: [{
@@ -30,6 +31,15 @@ const OrderSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: true
+    },
+    payment: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment', 
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 });
 
