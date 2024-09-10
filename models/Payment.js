@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Order = require("./Order"); 
 
 const PaymentSchema = new mongoose.Schema({
     transactionId: {
@@ -19,6 +20,10 @@ const PaymentSchema = new mongoose.Schema({
         required: true,
         enum: ['pending', 'completed', 'failed'],
         default: 'pending'
+    },
+    order: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order', 
     },
     createdAt: {
         type: Date,

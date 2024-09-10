@@ -39,7 +39,7 @@ exports.order = asyncHandler(async (req, res) => {
 
       const payment = await Payment.findOne({ transactionId: transactionId });
 
-      if (!payment || payment.status !== 'completed' || payment.amount != price || payment.phone != phoneNumber) {
+      if (!payment || payment.status !== 'completed' || payment.amount != price || payment.phone != phoneNumber || payment.order != null) {
           return res.status(400).json({ message: "Transação inválida ou incompleta" });
       }
 
@@ -75,6 +75,10 @@ exports.order = asyncHandler(async (req, res) => {
       });
 
       await order.save();
+
+      payment.order = order;
+      await payment.save();
+
       res.status(200).json({ success: true, message: "Pedido adicionado com sucesso" });
 
   } catch (error) {

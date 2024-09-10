@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const CartItem = require("./CartItem");
-const Payment = require("./Payment"); // Importar o modelo de pagamento
+const Payment = require("./Payment"); 
 
 const OrderSchema = new mongoose.Schema({
     items: [{
