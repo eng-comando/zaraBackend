@@ -38,6 +38,10 @@ exports.signup = asyncHandler(async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
+        if (!email || !username || !password) {
+            return res.status(400).json({ success: false, error: "Email, nome de utilizador e palavra passe são obrigatórios" });
+        }
+
         if (!validatePassword(password)) {
             return res.status(400).json({ success: false, error: 'A senha deve ter pelo menos um número, uma letra maiúscula e 8 caracteres no mínimo' });
         }
@@ -73,7 +77,7 @@ exports.signup = asyncHandler(async (req, res) => {
 
                 return res.status(200).json({ success: true, message: "Usuário já existente, mas não verificado. Verifique seu e-mail para o novo código de verificação." });
             } else {
-                return res.status(400).json({ success: false, error: "Usuário já existe com o mesmo e-mail" });
+                return res.status(401).json({ success: false, error: "Usuário já existe com o mesmo e-mail" });
             }
         }
 
@@ -137,13 +141,19 @@ exports.signup = asyncHandler(async (req, res) => {
 exports.requestResetPassword = asyncHandler(async (req, res) => {
     try {
         const { email } = req.body;
+
+                
+        if (!email ) {
+            return res.status(400).json({ success: false, error: "Email obrigatório" });
+        }
+
         let user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(400).json({ success: false, error: "Usuário não encontrado" });
+            return res.status(404).json({ success: false, error: "Usuário não encontrado" });
         }
         if (!user.isVerified) {
-            return res.status(400).json({ success: false, error: "Usuário ainda não verificou o email ao cadastrar-se" });
+            return res.status(401).json({ success: false, error: "Usuário ainda não verificou o email ao cadastrar-se" });
         }
         const verificationCode = generateVerificationCode();
     
@@ -182,6 +192,11 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     const { email, verificationCode, newPassword } = req.body;
 
     try {
+        
+        if (!email || !verificationCode || !newPassword) {
+            return res.status(400).json({ success: false, error: "Email, código de verificação e nova palavra passe são obrigatórios" });
+        }
+
         if (!validatePassword(newPassword)) {
             return res.status(400).json({ success: false, error: 'A senha deve ter pelo menos um número, uma letra maiúscula e 8 caracteres no mínimo' });
         }
@@ -189,7 +204,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
         
         let user = await User.findOne({ email });
         if (!user || Number(user.verificationCode) !== Number(verificationCode)) {
-            return res.status(400).json({ success: false, error: "Código de verificação inválido." });
+            return res.status(401).json({ success: false, error: "Código de verificação inválido." });
         }
         
         if(user.isVerified === true) {
@@ -202,7 +217,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
             await user.save();
             res.status(200).json({ success: true, message: "Senha redefinida com sucesso! Você pode agora entrar." });
         } else {
-            return res.status(400).json({ success: false, error: "Usuário não completou o registo, por favor complete o registo" });
+            return res.status(401).json({ success: false, error: "Usuário não completou o registo, por favor complete o registo" });
         }
         
         
@@ -214,10 +229,15 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 exports.verifyCode = asyncHandler(async (req, res) => {
     const { email, verificationCode } = req.body;
 
+
     try {
+        if (!email || !verificationCode) {
+            return res.status(400).json({ success: false, error: "Email e código de verificação são obrigatórios" });
+        }
+
         let user = await User.findOne({ email });
         if (!user || Number(user.verificationCode) !== Number(verificationCode)) {
-            return res.status(400).json({ success: false, error: "Código de verificação inválido." });
+            return res.status(401).json({ success: false, error: "Código de verificação inválido." });
         }
         
         user.isVerified = true;
@@ -242,50 +262,61 @@ exports.verifyCode = asyncHandler(async (req, res) => {
 exports.login = asyncHandler(async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ success: false, error: "Email e senha são obrigatórios" });
+        }
+
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(400).json({ success: false, error: "Usuário não encontrado" });
+            return res.status(404).json({ success: false, error: "Usuário não encontrado" });
         }
 
-        if(!user.isVerified) {
-            return res.status(400).json({ success: false, error: "Usuário ainda não verificou o email ao se cadastrar" });
+        if (!user.isVerified) {
+            return res.status(401).json({ success: false, error: "Usuário ainda não verificou o email ao se cadastrar" });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ success: false, error: "Senha incorreta" });
+            return res.status(401).json({ success: false, error: "Senha incorreta" });
         }
 
         const data = {
-            user:{
-                id:user.id,
+            user: {
+                id: user.id,
                 name: user.name,
                 email: user.email
             }
-        }
+        };
+
         const token = jwt.sign(data, SECRET_KEY, { expiresIn: '6h' });
 
         res.json({ success: true, token });
-
     } catch (error) {
         console.error('Error trying to login:', error);
         res.status(500).json({ success: false, message: "Server error: ", error: error.message });
     }
 });
 
+
 exports.loginAdmin = asyncHandler(async (req, res) => {
     try {
         const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ success: false, error: "Username e senha são obrigatórios" });
+        }
+
         const admin = await Admin.findOne({ username });
 
         if (!admin) {
-            return res.status(400).json({ message: "Usuário não encontrado" });
+            return res.status(404).json({ message: "Usuário não encontrado" });
         }
 
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Senha incorreta" });
+            return res.status(401).json({ message: "Senha incorreta" });
         }
 
         const token = jwt.sign({ id: admin._id, username: admin.username }, SECRET_KEY_ADMIN, {
@@ -307,7 +338,7 @@ exports.signupAdmin = asyncHandler(async (req, res) => {
         const existingAdmin = await Admin.findOne({ username });
 
         if (existingAdmin) {
-            return res.status(400).json({ message: "Usuário já existe" });
+            return res.status(401).json({ message: "Usuário já existe" });
         }
 
         const salt = await bcrypt.genSalt(10);
