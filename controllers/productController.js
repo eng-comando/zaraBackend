@@ -226,13 +226,30 @@ exports.popularinwomen = asyncHandler(async (req, res) => {
 
 exports.relatedproducts = asyncHandler(async (req, res) => {
     try {
-        const products = await Product.find({ category: req.body.category });
-        const relatedProducts = products.slice(0, 4);
+        const { name, type, category, id } = req.body;
+
+        let productsByName = await Product.find({ name, category, id: { $ne: id } });
+
+        
+        if (productsByName.length < 4) {
+            const productsByType = await Product.find({
+                type,
+                category,
+                name: { $ne: name }, 
+                id: { $ne: id } 
+            });
+
+            productsByName = [...productsByName, ...productsByType];
+        }
+
+        const relatedProducts = productsByName.slice(0, 4);
+
         res.json(relatedProducts);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching related products', error });
     }
 });
+
 
 exports.popularAndNewCollectionIds = asyncHandler(async (req, res) => {
     try {
