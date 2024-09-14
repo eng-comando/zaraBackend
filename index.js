@@ -18,9 +18,11 @@ require('dotenv').config();
 const API_HOST = process.env.API_HOST;
 const PASSWORD_MONGO = process.env.PASSWORD_MONGO;
 const CLUSTER = process.env.CLUSTER;
+const PRERENDER_TOKEN = process.env.const;
 
 app.use(express.json());
 app.use(cors());
+app.use(require('prerender-node').set('prerenderToken', PRERENDER_TOKEN));
 
 // Database Connection With MongoDB
 mongoose.connect("mongodb+srv://edsonanibal:"+ encodeURIComponent(PASSWORD_MONGO)+CLUSTER);
