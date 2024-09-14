@@ -47,6 +47,17 @@ const upload = multer({storage: storage});
 // Criando um endpoint de upload para imagens
 app.use("/images", express.static("upload/images"));
 
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+app.use(cors({
+    origin: ['https://zara-mz.shop'],
+    methods: 'GET, POST',
+    allowedHeaders: 'Content-Type, Authorization',
+}));
+
+
 app.post("/upload", upload.array('image'), (req, res) => {
     const imageUrls = req.files.map(file => `${API_HOST}/images/${file.filename}`);
     
