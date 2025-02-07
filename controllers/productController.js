@@ -11,6 +11,7 @@ require('dotenv').config();
 
 const SECRET_KEY = process.env.SECRET_KEY;
 const SECRET_KEY_ADMIN = process.env.SECRET_KEY_ADMIN;
+const API_HOST = process.env.API_HOST;
 
 exports.init = asyncHandler(async (req, res, next) => {
     try {
@@ -388,14 +389,63 @@ exports.getProductDetails = async (req, res) => {
     try {
         const { productId } = req.params;
         const product = await Product.findById(productId);
+
         if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
+            return res.status(404).send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Produto não encontrado</title>
+                </head>
+                <body>
+                    <h1>Produto não encontrado</h1>
+                </body>
+                </html>
+            `);
         }
-        res.status(200).json(product);
+
+        // Gerar HTML com Open Graph
+        res.status(200).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${product.name}</title>
+                <meta property="og:title" content="${product.name}" />
+                <meta property="og:description" content="${product.description}" />
+                <meta property="og:image" content="${product.images[0]}" />
+                API_HOST
+                <meta property="og:url" content="${API_HOST}/${productId}" />
+                <meta property="og:type" content="product" />
+            </head>
+            <body>
+                <h1>${product.name}</h1>
+                <p>${product.description}</p>
+                <img src="${product.images[0]}" alt="${product.name}" />
+            </body>
+            </html>
+        `);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching product', error });
+        res.status(500).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Erro no servidor</title>
+            </head>
+            <body>
+                <h1>Erro ao buscar o produto</h1>
+                <p>${error.message}</p>
+            </body>
+            </html>
+        `);
     }
 };
+
 
 exports.checkProductExists = async (req, res) => {
     try {
