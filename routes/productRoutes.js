@@ -27,6 +27,8 @@ router.delete('/product/:productId', productController.deleteProduct);
 
 router.get('/product/:productId', productController.getProductDetails);
 
+router.get('/productDetails/:productId', productController.getProductDetailsById);
+
 router.get('/verifyToken', productController.verifyToken);
 
 router.get('/popularAndNewCollectionIds', productController.popularAndNewCollectionIds);
