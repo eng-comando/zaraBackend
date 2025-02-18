@@ -52,6 +52,13 @@ const ProductSchema = new Schema({
         type: String,
         required: true,
     },
+    num_sells: {
+        type:Number,
+    },
+    favourite: {
+        type:Boolean,
+        required: true,
+    },
 });
 
 module.exports = mongoose.model("Product", ProductSchema);

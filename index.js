@@ -46,8 +46,14 @@ const upload = multer({storage: storage});
 app.use("/images", express.static("upload/images"));
 
 app.post("/upload", upload.array('image'), (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: "Nenhuma imagem foi carregada." });
+    }
+
     const imageUrls = req.files.map(file => `${API_HOST}/images/${file.filename}`);
-    
+
+    console.log('URLs das imagens:', imageUrls);
+
     res.json({
         success: 1,
         image_urls: imageUrls

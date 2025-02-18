@@ -11,6 +11,7 @@ require('dotenv').config();
 
 const SECRET_KEY = process.env.SECRET_KEY;
 const SECRET_KEY_ADMIN = process.env.SECRET_KEY_ADMIN;
+const FAVOURITE_PRODUCT_CONST = process.env.FAVOURITE_PRODUCT_CONST;
 
 exports.init = asyncHandler(async (req, res, next) => {
     try {
@@ -126,6 +127,8 @@ exports.addproduct = [authAdmin,
                 old_price:req.body.old_price,
                 sizes:req.body.sizes,
                 link:req.body.link,
+                num_sells:req.body.num_sells,
+                favourite:req.body.favourite,
             });
             await product.save();
 
@@ -187,6 +190,29 @@ exports.allproducts = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Error fetching all products', error });
     }
 });
+
+exports.favouriteProducts = asyncHandler(async (req, res) => {
+    try {
+        const favouriteProducts = await Product.find({ favourite: true });
+        res.json(favouriteProducts);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching favourite products', error });
+    }
+});
+
+exports.updateFavouriteProducts = asyncHandler(async (req, res) => {
+    try {
+        await Product.updateMany(
+            { num_sells: { $gt: FAVOURITE_PRODUCT_CONST } }, 
+            { $set: { favourite: true } } 
+        );
+
+        res.json({ message: 'Favourite products updated successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating favourite products', error });
+    }
+});
+
 
 exports.newcollections = asyncHandler(async (req, res) => {
     try {

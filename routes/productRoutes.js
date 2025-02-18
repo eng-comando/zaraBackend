@@ -9,6 +9,10 @@ router.post('/addproduct', productController.addproduct);
 
 router.get('/allproducts', productController.allproducts);
 
+router.get('/favouriteProducts', productController.favouriteProducts);
+
+router.post('/updateFavouriteProducts', productController.updateFavouriteProducts);
+
 router.get('/newcollections', productController.newcollections);
 
 router.get('/popularinwomen', productController.popularinwomen);
