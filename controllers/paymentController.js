@@ -16,6 +16,8 @@ const PASSWORD = process.env.PASSWORD;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
+let productQuantities = {}
+
 const calculateTotalAmount = async (cartItems) => {
     let totalAmount = 0;
 
@@ -35,6 +37,11 @@ const calculateTotalAmount = async (cartItems) => {
                         totalQuantity += cartItem[key];
                     }
                 }
+
+                if (totalQuantity > 0) {
+                    productQuantities[itemInfo.id] = totalQuantity;
+                }
+                
                 totalAmount += itemInfo.new_price * totalQuantity;
             }
         }
@@ -87,23 +94,22 @@ exports.payment = asyncHandler(async (req, res, next) => {
 
         await payment.save();
 
-        for (const item in req.body.cartItems) {
-            const cartItem = req.body.cartItems[item];
+        const bulkOps = [];
 
-            const product = await Product.findOne({ id: Number(item) });
+        for (const productId in productQuantities) {
+            const totalQuantity = productQuantities[productId];
 
-            if (product) {
-                let totalQuantity = 0;
+            bulkOps.push({
+                updateOne: {
+                    filter: { id: Number(productId) },
+                    update: { $inc: { num_sells: totalQuantity } },
+                },
+            });
+        }
 
-                for (const key in cartItem) {
-                    if (key.startsWith('quantity') && cartItem[key] > 0) {
-                        totalQuantity += cartItem[key];
-                    }
-                }
-                
-                product.num_sells += totalQuantity;
-                await product.save();
-            }
+        if (bulkOps.length > 0) {
+            const result = await Product.bulkWrite(bulkOps);
+            console.log(`Atualização de vendas concluída. Itens modificados: ${result.modifiedCount}`);
         }
 
         res.send({ success: true, message: "Transação realizada com sucesso", transactionId: transactionId });
