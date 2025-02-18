@@ -87,6 +87,25 @@ exports.payment = asyncHandler(async (req, res, next) => {
 
         await payment.save();
 
+        for (const item in req.body.cartItems) {
+            const cartItem = req.body.cartItems[item];
+
+            const product = await Product.findOne({ id: Number(item) });
+
+            if (product) {
+                let totalQuantity = 0;
+
+                for (const key in cartItem) {
+                    if (key.startsWith('quantity') && cartItem[key] > 0) {
+                        totalQuantity += cartItem[key];
+                    }
+                }
+                
+                product.num_sells += totalQuantity;
+                await product.save();
+            }
+        }
+
         res.send({ success: true, message: "Transação realizada com sucesso", transactionId: transactionId });
     } catch (error) {
         console.error('Error trying to make payment:', error);
