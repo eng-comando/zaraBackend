@@ -71,7 +71,8 @@ exports.order = asyncHandler(async (req, res) => {
           name,
           status,
           price,
-          payment
+          payment,
+          code: Math.floor(100000 + Math.random() * 900000) 
       });
 
       await order.save();
