@@ -63,6 +63,8 @@ exports.order = asyncHandler(async (req, res) => {
           return cartItem;
       }));
 
+      const orderCode = Math.floor(100000 + Math.random() * 900000);
+
       const order = new Order({
           items: cartItems.map(cartItem => cartItem._id),
           phoneNumber,
@@ -72,7 +74,7 @@ exports.order = asyncHandler(async (req, res) => {
           status,
           price,
           payment,
-          code: Math.floor(100000 + Math.random() * 900000) 
+          code: orderCode
       });
 
       await order.save();
@@ -80,7 +82,7 @@ exports.order = asyncHandler(async (req, res) => {
       payment.order = order;
       await payment.save();
 
-      res.status(200).json({ success: true, message: "Pedido adicionado com sucesso" });
+      res.status(200).json({ success: true, message: "Pedido adicionado com sucesso", orderCode: orderCode });
 
   } catch (error) {
       console.error('Server Error:', error);
