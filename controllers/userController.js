@@ -320,7 +320,7 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
         }
 
         const token = jwt.sign({ id: admin._id, username: admin.username }, SECRET_KEY_ADMIN, {
-            expiresIn: "6h",
+            expiresIn: "8h",
         });
 
         res.json({ token });

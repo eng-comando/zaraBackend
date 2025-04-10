@@ -440,14 +440,20 @@ exports.getProductDetailsById = async (req, res) => {
   };
   
 
-exports.checkProductExists = async (req, res) => {
+  exports.checkProductExists = async (req, res) => {
     try {
         const { name } = req.body;
 
         const product = await Product.findOne({ name });
 
         if (product) {
-            return res.status(200).json({ exists: true, id: product.id, message: 'Produto com este nome já existe.' });
+            const { color, images, ...productData } = product.toObject();
+            
+            return res.status(200).json({ 
+                exists: true, 
+                message: 'Produto com este nome já existe.', 
+                product: productData 
+            });
         } else {
             return res.status(200).json({ exists: false, message: 'Produto disponível.' });
         }
