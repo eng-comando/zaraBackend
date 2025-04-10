@@ -252,23 +252,28 @@ exports.popularinwomen = asyncHandler(async (req, res) => {
 
 exports.relatedproducts = asyncHandler(async (req, res) => {
     try {
-        const { name, type, category, id } = req.body;
+        const { name, type, category, id, link } = req.body;
 
-        let productsByName = await Product.find({ name, category, id: { $ne: id } });
+        let productsByLink = await Product.find({ link, id: { $ne: id } });
 
-        
-        if (productsByName.length < 4) {
-            const productsByType = await Product.find({
-                type,
-                category,
-                name: { $ne: name }, 
-                id: { $ne: id } 
-            });
+        if (productsByLink.length < 4) {
+            let productsByName = await Product.find({ name, category, id: { $ne: id } });
 
-            productsByName = [...productsByName, ...productsByType];
+            if (productsByName.length < 4) {
+                const productsByType = await Product.find({
+                    type,
+                    category,
+                    name: { $ne: name },
+                    id: { $ne: id }
+                });
+
+                productsByName = [...productsByName, ...productsByType];
+            }
+
+            productsByLink = [...productsByLink, ...productsByName];
         }
-
-        const relatedProducts = productsByName.slice(0, 4);
+        
+        const relatedProducts = productsByLink.slice(0, 4);
 
         res.json(relatedProducts);
     } catch (error) {
