@@ -270,9 +270,10 @@ exports.relatedproducts = asyncHandler(async (req, res) => {
                 productsByName = [...productsByName, ...productsByType];
             }
 
-            productsByLink = [...productsByLink, ...productsByName];
+            productsByLink = [...new Set([...productsByLink, ...productsByName].map(product => product.id))]
+                .map(id => [...productsByLink, ...productsByName].find(product => product.id === id));
         }
-        
+
         const relatedProducts = productsByLink.slice(0, 4);
 
         res.json(relatedProducts);
