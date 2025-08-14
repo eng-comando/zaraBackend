@@ -7,4 +7,6 @@ router.post('/payment', paymentController.payment);
 
 router.post('/sendConfirmationEmail', paymentController.sendConfirmationEmail);
 
+router.post('/callback', paymentController.paymentCallback);
+
 module.exports = router;

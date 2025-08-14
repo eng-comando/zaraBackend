@@ -8,10 +8,6 @@ const OrderSchema = new mongoose.Schema({
         ref: "CartItem", 
         required: true
     }],
-    phoneNumber: {
-        type: String,
-        required: true
-    },
     callNumber: {
         type: String,
         required: true

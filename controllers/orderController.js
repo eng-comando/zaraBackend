@@ -27,7 +27,7 @@ const authAdmin = (req, res, next) => {
 
 exports.order = asyncHandler(async (req, res) => {
   try {
-      const { items, phoneNumber, callNumber, email, name, status, price, transactionId } = req.body;
+      const { items, callNumber, email, name, status, price, transactionId } = req.body;
 
       if (!items || !Array.isArray(items)) {
           return res.status(400).json({ message: "Dados dos itens inválidos" });
@@ -67,7 +67,6 @@ exports.order = asyncHandler(async (req, res) => {
 
       const order = new Order({
           items: cartItems.map(cartItem => cartItem._id),
-          phoneNumber,
           callNumber,
           email,
           name,

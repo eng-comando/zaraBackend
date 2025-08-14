@@ -15,7 +15,8 @@ const EMAIL = process.env.EMAIL;
 const PASSWORD = process.env.PASSWORD;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-
+const API_HOST = process.env.API_HOST;
+const PAYSUITE_AUTH_KEY = process.env.PAYSUITE_AUTH_KEY;
 let productQuantities = {}
 
 const calculateTotalAmount = async (cartItems) => {
@@ -52,73 +53,132 @@ const calculateTotalAmount = async (cartItems) => {
     return totalAmount;
 };
 
-
-exports.payment = asyncHandler(async (req, res, next) => {
+// Criar pagamento
+exports.payment = asyncHandler(async (req, res) => {
     try {
-        const tokenResponse = await axios.post('https://e2payments.explicador.co.mz/oauth/token', {
-            grant_type: 'client_credentials',
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET
-        });
+        // 1. Calcular valor total a pagar
+        const recalculatedAmount = await calculateTotalAmount(req.body.cartItems);
 
-        const accessToken = tokenResponse.data.access_token;
-        console.log(accessToken);
+        // 2. Criar referência única
+        const paymentReference = `ZARA-${uuidv4()}`;
 
-        const ENDPOINT_URL = "https://e2payments.explicador.co.mz/v1/c2b/mpesa-payment/702645";
-        const header = {
-            "Authorization": "Bearer " + accessToken,
-            "Accept": "application/json",
-            "Content-Type": "application/json"
+        // 3. Montar payload PaySuite
+        const body = {
+            amount: recalculatedAmount.toFixed(2),
+            reference: paymentReference,
+            description: `Pagamento de compra Zara MZ - ${paymentReference}`,
+            return_url: `http://localhost:3000/payment?transactionId=${paymentReference}`, // frontend irá receber transactionId
+            callback_url: `${API_HOST}/callback`
         };
 
-        const recalculatedAmount = await calculateTotalAmount(req.body.cartItems); 
 
-        const payloadC2b = {
-            "client_id": CLIENT_ID,
-            "amount": recalculatedAmount,
-            "phone": req.body.phone,
-            "reference": "PagamentoZaraMZ"
-        };
+        // 4. Criar pagamento na PaySuite
+        const paysuiteResponse = await axios.post(
+            "https://paysuite.tech/api/v1/payments",
+            body,
+            {
+                headers: {
+                    Authorization: `Bearer ${PAYSUITE_AUTH_KEY}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json"
+                }
+            }
+        );
 
-        const paymentResponse = await axios.post(ENDPOINT_URL, payloadC2b, { headers: header });
-        console.log('Transação realizada com sucesso:', paymentResponse.data);
+        const data = paysuiteResponse.data;
 
-        const transactionId = uuidv4();
+        if (data.status !== "success") {
+            return res.status(400).json({
+                success: false,
+                message: data.message || "Erro ao criar pagamento na PaySuite"
+            });
+        }
 
+        // 5. Salvar pagamento no banco
         const payment = new Payment({
-            transactionId: transactionId,
-            amount: recalculatedAmount,
-            phone: req.body.phone,
-            status: 'completed' 
+            paysuiteId: data.data.id,
+            amount: data.data.amount,
+            reference: data.data.reference,
+            status: data.data.status, // "pending"
+            checkoutUrl: data.data.checkout_url,
+            phone: req.body.phone
         });
-
         await payment.save();
 
+        // 6. Atualizar contagem de vendas
+        const productQuantities = req.body.productQuantities || {};
         const bulkOps = [];
 
         for (const productId in productQuantities) {
-            const totalQuantity = productQuantities[productId];
-
             bulkOps.push({
                 updateOne: {
                     filter: { id: Number(productId) },
-                    update: { $inc: { num_sells: totalQuantity } },
-                },
+                    update: { $inc: { num_sells: productQuantities[productId] } }
+                }
             });
         }
 
         if (bulkOps.length > 0) {
             const result = await Product.bulkWrite(bulkOps);
-            console.log(`Atualização de vendas concluída. Itens modificados: ${result.modifiedCount}`);
+            console.log(`Vendas atualizadas: ${result.modifiedCount} produtos`);
         }
 
-        res.send({ success: true, message: "Transação realizada com sucesso", transactionId: transactionId });
-    } catch (error) {
-        console.error('Error trying to make payment:', error);
+        // 7. Retornar checkout_url ao frontend
+        res.json({
+            success: true,
+            message: "Pagamento criado com sucesso",
+            checkoutUrl: data.data.checkout_url,
+            reference: data.data.reference
+        });
 
-        res.status(500).send({ success: false, message: "Erro ao realizar transação", error: error.message });
+    } catch (error) {
+        console.error("Erro ao criar pagamento:", error?.response?.data || error.message);
+        res.status(500).json({
+            success: false,
+            message: "Erro interno ao processar pagamento",
+            error: error?.response?.data || error.message
+        });
     }
 });
+
+// Callback do PaySuite
+exports.paymentCallback = asyncHandler(async (req, res) => {
+    try {
+        console.log("📩 Callback recebido da PaySuite:", req.body);
+
+        const { id, status } = req.body;
+        if (!id || !status) {
+            return res.status(400).json({ success: false, message: "Dados inválidos no callback." });
+        }
+
+        // Atualizar status do pagamento no banco
+        const updatedPayment = await Payment.findOneAndUpdate(
+            { paysuiteId: id },
+            { status },
+            { new: true }
+        );
+
+        if (!updatedPayment) {
+            console.warn("⚠️ Pagamento não encontrado para ID:", id);
+            return res.status(404).json({ success: false, message: "Pagamento não encontrado." });
+        }
+
+        console.log("✅ Status do pagamento atualizado para:", status);
+
+        // Se o status for 'paid', aqui você pode chamar sua lógica de backend para processar pedido
+        // Por exemplo, criar uma Order ou enviar email (opcional, ou seu frontend fará isso ao retornar à página)
+
+        res.status(200).json({ success: true, message: "Callback processado com sucesso" });
+
+    } catch (error) {
+        console.error("Erro no callback:", error);
+        res.status(500).json({
+            success: false,
+            message: "Erro interno ao processar callback"
+        });
+    }
+});
+
 
 const transporter = nodemailer.createTransport({
     host: HOST, 
