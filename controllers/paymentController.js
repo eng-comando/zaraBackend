@@ -60,7 +60,7 @@ exports.payment = asyncHandler(async (req, res) => {
         const recalculatedAmount = await calculateTotalAmount(req.body.cartItems);
 
         // 2. Criar referência única
-        const paymentReference = `ZARA-${uuidv4()}`;
+        const paymentReference = `ZARA-${uuidv4().replace(/-/g, '').slice(0, 14)}`;
 
         // 3. Montar payload PaySuite
         const body = {
@@ -146,27 +146,36 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
     try {
         console.log("📩 Callback recebido da PaySuite:", req.body);
 
-        const { id, status } = req.body;
-        if (!id || !status) {
+        const { event, data } = req.body;
+
+        if (!event || !data || !data.id) {
             return res.status(400).json({ success: false, message: "Dados inválidos no callback." });
+        }
+
+        let status = "pending";
+
+        if (event === "payment.success") {
+            status = "paid";
+        } else if (event === "payment.failed") {
+            status = "failed";
         }
 
         // Atualizar status do pagamento no banco
         const updatedPayment = await Payment.findOneAndUpdate(
-            { paysuiteId: id },
+            { paysuiteId: data.id },
             { status },
             { new: true }
         );
 
         if (!updatedPayment) {
-            console.warn("⚠️ Pagamento não encontrado para ID:", id);
+            console.warn("⚠️ Pagamento não encontrado para ID:", data.id);
             return res.status(404).json({ success: false, message: "Pagamento não encontrado." });
         }
 
         console.log("✅ Status do pagamento atualizado para:", status);
 
-        // Se o status for 'paid', aqui você pode chamar sua lógica de backend para processar pedido
-        // Por exemplo, criar uma Order ou enviar email (opcional, ou seu frontend fará isso ao retornar à página)
+        // Se status for 'paid', você pode chamar lógica adicional aqui
+        // Ex: criar ordem automaticamente, enviar email, etc.
 
         res.status(200).json({ success: true, message: "Callback processado com sucesso" });
 
@@ -178,6 +187,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
         });
     }
 });
+
 
 
 const transporter = nodemailer.createTransport({
