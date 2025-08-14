@@ -209,13 +209,11 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
 
         // Se o pagamento foi confirmado, criar ordem automaticamente
         if (status === "paid") {
-            const cart = updatedPayment.cart || {}; // pegar o carrinho salvo no Payment
+
             let cartOrders = [];
+            const cart = updatedPayment.cart || {}; // carrinho salvo no Payment
 
-            // Transformar objeto em array de itens com quantidades > 0
             for (const key in cart) {
-                if (!cart.hasOwnProperty(key)) continue;
-
                 const item = cart[key];
                 const totalQuantity = (item.quantity0 || 0) + (item.quantity1 || 0) + (item.quantity2 || 0);
 
@@ -232,27 +230,12 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 }
             }
 
-            console.log("Cart orders processados:", cartOrders);
+            console.log("\nCarrinho: "+cartOrders);
 
             const orderCode = Math.floor(100000 + Math.random() * 900000);
-
-            // Criar CartItems no banco
-            const savedCartItems = await Promise.all(cartOrders.map(async (item) => {
-                const cartItem = new CartItem({
-                    link: item.link,
-                    name: item.name,
-                    price: item.price,
-                    sizes: item.sizes,
-                    color: item.color,
-                    productId: item.productId
-                });
-                await cartItem.save();
-                return cartItem;
-            }));
-
-            // Criar Order
-            const order = new Order({
-                items: savedCartItems.map(ci => ci._id),
+            const order = {
+                items: cartOrders,
+                phoneNumber: updatedPayment.phone,
                 callNumber: updatedPayment.phone,
                 email: updatedPayment.email,
                 name: updatedPayment.name,
@@ -260,7 +243,8 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 price: updatedPayment.amount,
                 payment: updatedPayment._id,
                 code: orderCode
-            });
+            };
+
             await order.save();
 
             // Enviar email de confirmação
@@ -284,7 +268,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
             });
 
             console.log("\n"+emailBody+"\n");
-            
+
             console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
         }
 
