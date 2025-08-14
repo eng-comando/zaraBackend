@@ -209,12 +209,35 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
 
         // Se o pagamento foi confirmado, criar ordem automaticamente
         if (status === "paid") {
-            const cartItems = updatedPayment.cartItems || []; // ou você pode passar do frontend
-            console.log(cartItems)
+            const cart = updatedPayment.cart || {}; // pegar o carrinho salvo no Payment
+            let cartOrders = [];
+
+            // Transformar objeto em array de itens com quantidades > 0
+            for (const key in cart) {
+                if (!cart.hasOwnProperty(key)) continue;
+
+                const item = cart[key];
+                const totalQuantity = (item.quantity0 || 0) + (item.quantity1 || 0) + (item.quantity2 || 0);
+
+                if (totalQuantity > 0) {
+                    cartOrders.push({
+                        link: item.link,
+                        name: item.name,
+                        sizes: item.sizes,
+                        price: item.price,
+                        color: item.color,
+                        productId: item.productId,
+                        totalQuantity
+                    });
+                }
+            }
+
+            console.log("Cart orders processados:", cartOrders);
+
             const orderCode = Math.floor(100000 + Math.random() * 900000);
 
             // Criar CartItems no banco
-            const savedCartItems = await Promise.all(cartItems.map(async (item) => {
+            const savedCartItems = await Promise.all(cartOrders.map(async (item) => {
                 const cartItem = new CartItem({
                     link: item.link,
                     name: item.name,
@@ -240,10 +263,8 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
             });
             await order.save();
 
-            console.log("✅ Ordem criada automaticamente com código:", orderCode);
-
             // Enviar email de confirmação
-            const cartDetailsHTML = generateCartDetailsHTML(cartItems);
+            const cartDetailsHTML = generateCartDetailsHTML(cartOrders);
 
             const emailBody = `
                 <p>Olá,</p>
@@ -256,14 +277,14 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 <p>Atenciosamente,<br>ZaraMz</p>
             `;
 
-
-            // Supondo que você tenha endpoint para enviar emails
             await axios.post(`${API_HOST}/sendConfirmationEmail`, {
                 recipientEmail: updatedPayment.email,
                 subject: "Confirmação de Pagamento",
                 html: emailBody
             });
 
+            console.log("\n"+emailBody+"\n");
+            
             console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
         }
 
