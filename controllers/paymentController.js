@@ -211,7 +211,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
         if (status === "paid") {
 
             let cartOrders = [];
-            const cart = updatedPayment.cart[0] || {}; // carrinho salvo no Payment
+            const cart = updatedPayment.cartItems || {}; // carrinho salvo no Payment
 
             for (const key in cart) {
                 const item = cart[key];
