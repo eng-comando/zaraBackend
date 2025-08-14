@@ -218,7 +218,6 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 const totalQuantity = (item.quantity0 || 0) + (item.quantity1 || 0) + (item.quantity2 || 0);
 
                 if (totalQuantity > 0) {
-                    console.log("ENTREIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\nIIIIIIIIIIIIIIIII\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\nIIIIIIIIIIIIIIIIIII")
                     cartOrders.push({
                         link: item.link,
                         name: item.name,
@@ -231,20 +230,30 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 }
             }
 
-            console.log("\nCarrinho: "+cartOrders);
+            console.log("\nCarrinho:", cartOrders);
 
+            // 1️⃣ Salvar cada item do carrinho no MongoDB
+            const savedCartItems = await Promise.all(cartOrders.map(async (item) => {
+                const cartItem = new CartItem({
+                    link: item.link,
+                    name: item.name,
+                    sizes: item.sizes,
+                    price: item.price,
+                    color: item.color,
+                    productId: item.productId,
+                    quantity0: item.quantity0 || 0,
+                    quantity1: item.quantity1 || 0,
+                    quantity2: item.quantity2 || 0
+                });
+                await cartItem.save();
+                return cartItem;
+            }));
+
+            // 2️⃣ Criar pedido usando os ObjectId dos CartItems
             const orderCode = Math.floor(100000 + Math.random() * 900000);
 
-            
             const order = new Order({
-            items: cartOrders.map(item => ({
-                link: item.link,
-                name: item.name,
-                sizes: item.sizes,
-                price: item.price,
-                color: item.color,
-                productId: item.productId
-            })),
+                items: savedCartItems.map(ci => ci._id), // ✅ Array de ObjectId
                 callNumber: updatedPayment.phone,
                 email: updatedPayment.email,
                 name: updatedPayment.name,
@@ -255,7 +264,6 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
             });
 
             await order.save();
-
 
             // Enviar email de confirmação
             const cartDetailsHTML = generateCartDetailsHTML(cartOrders);
