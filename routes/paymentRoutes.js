@@ -9,4 +9,6 @@ router.post('/sendConfirmationEmail', paymentController.sendConfirmationEmail);
 
 router.post('/callback', paymentController.paymentCallback);
 
+router.get('/status/:reference', paymentController.getPaymentStatus);
+
 module.exports = router;

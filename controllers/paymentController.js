@@ -67,10 +67,9 @@ exports.payment = asyncHandler(async (req, res) => {
             amount: recalculatedAmount.toFixed(2),
             reference: paymentReference,
             description: `Pagamento de compra Zara MZ - ${paymentReference}`,
-            return_url: `http://localhost:3000/payment?transactionId=${paymentReference}`, // frontend irá receber transactionId
+            return_url: `http://localhost:3000/payment?transactionId=${paymentReference}`, // frontend receberá transactionId
             callback_url: `${API_HOST}/callback`
         };
-
 
         // 4. Criar pagamento na PaySuite
         const paysuiteResponse = await axios.post(
@@ -94,14 +93,17 @@ exports.payment = asyncHandler(async (req, res) => {
             });
         }
 
-        // 5. Salvar pagamento no banco
+        // 5. Salvar pagamento no banco com dados do cliente
         const payment = new Payment({
             paysuiteId: data.data.id,
             amount: data.data.amount,
             reference: data.data.reference,
             status: data.data.status, // "pending"
             checkoutUrl: data.data.checkout_url,
-            phone: req.body.phone
+            phone: req.body.callNumber, 
+            email: req.body.email,      
+            name: req.body.name,
+            cartItems: req.body.cartItems
         });
         await payment.save();
 
@@ -141,6 +143,37 @@ exports.payment = asyncHandler(async (req, res) => {
     }
 });
 
+const generateCartDetailsHTML = (cartItems) => {
+    if (!cartItems || !cartItems.length) return "<p>Carrinho vazio</p>";
+
+    let details = '<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%;">';
+    details += `
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Preço (MZN)</th>
+                <th>Quantidade Total</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    for (const item of cartItems) {
+        const totalQuantity = (item.quantity0 || 0) + (item.quantity1 || 0) + (item.quantity2 || 0) || 1; // default 1 se não tiver qty
+        details += `
+            <tr>
+                <td>${item.name || 'Nome não disponível'}</td>
+                <td>${item.price || 'Preço não disponível'} MZN</td>
+                <td>${totalQuantity}</td>
+            </tr>
+        `;
+    }
+
+    details += `</tbody></table>`;
+    return details;
+};
+
+
 // Callback do PaySuite
 exports.paymentCallback = asyncHandler(async (req, res) => {
     try {
@@ -174,8 +207,65 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
 
         console.log("✅ Status do pagamento atualizado para:", status);
 
-        // Se status for 'paid', você pode chamar lógica adicional aqui
-        // Ex: criar ordem automaticamente, enviar email, etc.
+        // Se o pagamento foi confirmado, criar ordem automaticamente
+        if (status === "paid") {
+            const cartItems = updatedPayment.cartItems || []; // ou você pode passar do frontend
+            console.log(cartItems)
+            const orderCode = Math.floor(100000 + Math.random() * 900000);
+
+            // Criar CartItems no banco
+            const savedCartItems = await Promise.all(cartItems.map(async (item) => {
+                const cartItem = new CartItem({
+                    link: item.link,
+                    name: item.name,
+                    price: item.price,
+                    sizes: item.sizes,
+                    color: item.color,
+                    productId: item.productId
+                });
+                await cartItem.save();
+                return cartItem;
+            }));
+
+            // Criar Order
+            const order = new Order({
+                items: savedCartItems.map(ci => ci._id),
+                callNumber: updatedPayment.phone,
+                email: updatedPayment.email,
+                name: updatedPayment.name,
+                status: "Recebido",
+                price: updatedPayment.amount,
+                payment: updatedPayment._id,
+                code: orderCode
+            });
+            await order.save();
+
+            console.log("✅ Ordem criada automaticamente com código:", orderCode);
+
+            // Enviar email de confirmação
+            const cartDetailsHTML = generateCartDetailsHTML(cartItems);
+
+            const emailBody = `
+                <p>Olá,</p>
+                <p>Seu pagamento foi confirmado com sucesso! Abaixo estão os detalhes dos produtos:</p>
+                ${cartDetailsHTML}
+                <p><strong>Valor total:</strong> ${updatedPayment.amount} MZN</p>
+                <p><strong>Código da encomenda:</strong> <span style="font-weight: bold; color: red;">${orderCode}</span></p>
+                <p style="color: red; font-weight: bold;">Por favor, guarde este código. Ele será necessário para o levantamento da sua encomenda.</p>
+                <p>Obrigado por comprar conosco!</p>
+                <p>Atenciosamente,<br>ZaraMz</p>
+            `;
+
+
+            // Supondo que você tenha endpoint para enviar emails
+            await axios.post(`${API_HOST}/sendConfirmationEmail`, {
+                recipientEmail: updatedPayment.email,
+                subject: "Confirmação de Pagamento",
+                html: emailBody
+            });
+
+            console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
+        }
 
         res.status(200).json({ success: true, message: "Callback processado com sucesso" });
 
@@ -187,6 +277,40 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
         });
     }
 });
+
+
+// GET /status/:reference
+exports.getPaymentStatus = asyncHandler(async (req, res) => {
+    try {
+        const { reference } = req.params;
+
+        if (!reference) {
+            return res.status(400).json({ success: false, message: "Referência inválida." });
+        }
+
+        // Buscar pagamento pelo reference
+        const payment = await Payment.findOne({ reference });
+
+        if (!payment) {
+            return res.status(404).json({ success: false, message: "Pagamento não encontrado." });
+        }
+
+        res.json({
+            success: true,
+            status: payment.status,
+            paysuiteId: payment.paysuiteId,
+            amount: payment.amount
+        });
+
+    } catch (error) {
+        console.error("Erro ao consultar status do pagamento:", error);
+        res.status(500).json({
+            success: false,
+            message: "Erro interno ao consultar status do pagamento."
+        });
+    }
+});
+
 
 
 

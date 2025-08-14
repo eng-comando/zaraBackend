@@ -27,67 +27,80 @@ const authAdmin = (req, res, next) => {
 
 exports.order = asyncHandler(async (req, res) => {
   try {
-      const { items, callNumber, email, name, status, price, transactionId } = req.body;
+    const { items, callNumber, email, name, status, price, transactionId } = req.body;
 
-      if (!items || !Array.isArray(items)) {
-          return res.status(400).json({ message: "Dados dos itens inválidos" });
+    // Validações básicas
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "Dados dos itens inválidos" });
+    }
+
+    if (!transactionId) {
+      return res.status(400).json({ message: "ID da transação é obrigatório" });
+    }
+
+    if (!callNumber || !email || !name) {
+      return res.status(400).json({ message: "Dados do cliente incompletos" });
+    }
+
+    // Verifica se pagamento existe e está confirmado
+    const payment = await Payment.findOne({ reference: transactionId });
+    if (!payment || payment.status !== "paid" || payment.amount !== price) {
+      return res.status(400).json({ message: "Transação inválida ou incompleta" });
+    }
+
+    // Salva itens do carrinho
+    const cartItems = await Promise.all(items.map(async (itemData) => {
+      const { link, name, price, sizes, color, productId } = itemData;
+      if (!link || !name || !price || !sizes || !productId) {
+        throw new Error("Dados do item inválidos");
       }
 
-      if (!transactionId) {
-          return res.status(400).json({ message: "ID da transação é obrigatório" });
-      }
-
-      const payment = await Payment.findOne({ transactionId: transactionId });
-
-      if (!payment || payment.status !== 'completed' || payment.amount != price || payment.phone != phoneNumber || payment.order != null) {
-          return res.status(400).json({ message: "Transação inválida ou incompleta" });
-      }
-
-      const cartItems = await Promise.all(items.map(async (itemData) => {
-          const { link, name, price, sizes, color, productId } = itemData;
-          
-          if (!link || !name || !price || !sizes || !productId) {
-              throw new Error('Dados do item inválidos');
-          }
-
-          const cartItem = new CartItem({
-              link,
-              name,
-              price,
-              sizes,
-              color,
-              productId
-          });
-
-          await cartItem.save();
-          return cartItem;
-      }));
-
-      const orderCode = Math.floor(100000 + Math.random() * 900000);
-
-      const order = new Order({
-          items: cartItems.map(cartItem => cartItem._id),
-          callNumber,
-          email,
-          name,
-          status,
-          price,
-          payment,
-          code: orderCode
+      const cartItem = new CartItem({
+        link,
+        name,
+        price,
+        sizes,
+        color,
+        productId
       });
 
-      await order.save();
+      await cartItem.save();
+      return cartItem;
+    }));
 
-      payment.order = order;
-      await payment.save();
+    // Gera código da encomenda
+    const orderCode = Math.floor(100000 + Math.random() * 900000);
 
-      res.status(200).json({ success: true, message: "Pedido adicionado com sucesso", orderCode: orderCode });
+    // Cria pedido
+    const order = new Order({
+      items: cartItems.map(ci => ci._id),
+      callNumber,
+      email,
+      name,
+      status: status || "Recebido",
+      price,
+      payment: payment._id,
+      code: orderCode
+    });
+
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Pedido adicionado com sucesso",
+      orderCode
+    });
 
   } catch (error) {
-      console.error('Server Error:', error);
-      res.status(500).json({ success: false, message: "Falha ao registrar pedido", error: 'Erro Interno do Servidor' });
+    console.error("Server Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Falha ao registrar pedido",
+      error: "Erro Interno do Servidor"
+    });
   }
 });
+
 
 
 exports.allorders = [authAdmin, asyncHandler(async (req, res) => {
