@@ -9,14 +9,12 @@ const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
-const SECRET_KEY = process.env.SECRET_KEY;
 const HOST = process.env.HOST;
 const EMAIL = process.env.EMAIL;
 const PASSWORD = process.env.PASSWORD;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const API_HOST = process.env.API_HOST;
 const PAYSUITE_AUTH_KEY = process.env.PAYSUITE_AUTH_KEY;
+const API_FRONTEND = process.env.API_FRONTEND;
 let productQuantities = {}
 
 const calculateTotalAmount = async (cartItems) => {
@@ -67,7 +65,7 @@ exports.payment = asyncHandler(async (req, res) => {
             amount: recalculatedAmount.toFixed(2),
             reference: paymentReference,
             description: `Pagamento de compra Zara MZ - ${paymentReference}`,
-            return_url: `http://localhost:3000/payment?transactionId=${paymentReference}`, // frontend receberá transactionId
+            return_url: `${API_FRONTEND}/payment?transactionId=${paymentReference}`, // frontend receberá transactionId
             callback_url: `${API_HOST}/callback`
         };
 
@@ -285,7 +283,6 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 html: emailBody
             });
 
-            console.log("\n"+emailBody+"\n");
 
             console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
         }
