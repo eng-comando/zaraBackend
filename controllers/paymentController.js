@@ -218,6 +218,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 const totalQuantity = (item.quantity0 || 0) + (item.quantity1 || 0) + (item.quantity2 || 0);
 
                 if (totalQuantity > 0) {
+                    console.log("ENTREIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\nIIIIIIIIIIIIIIIII\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\nIIIIIIIIIIIIIIIIIII")
                     cartOrders.push({
                         link: item.link,
                         name: item.name,
@@ -233,9 +234,17 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
             console.log("\nCarrinho: "+cartOrders);
 
             const orderCode = Math.floor(100000 + Math.random() * 900000);
-            const order = {
-                items: cartOrders,
-                phoneNumber: updatedPayment.phone,
+
+            
+            const order = new Order({
+            items: cartOrders.map(item => ({
+                link: item.link,
+                name: item.name,
+                sizes: item.sizes,
+                price: item.price,
+                color: item.color,
+                productId: item.productId
+            })),
                 callNumber: updatedPayment.phone,
                 email: updatedPayment.email,
                 name: updatedPayment.name,
@@ -243,9 +252,10 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 price: updatedPayment.amount,
                 payment: updatedPayment._id,
                 code: orderCode
-            };
+            });
 
             await order.save();
+
 
             // Enviar email de confirmação
             const cartDetailsHTML = generateCartDetailsHTML(cartOrders);
