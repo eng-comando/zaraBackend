@@ -445,6 +445,22 @@ exports.getProductDetailsById = async (req, res) => {
     }
   };
   
+  exports.deleteProduct = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        const deletedProduct = await Product.findOneAndDelete({ id: productId });
+
+        if (!deletedProduct) {
+        return res.status(404).json({ message: 'Produto não encontrado' });
+        }
+
+        res.status(200).json({ message: 'Produto '+productId+' apagado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao apagar produto:', error);
+        res.status(500).json({ message: 'Erro ao apagar produto' });
+    }
+    };
 
   exports.checkProductExists = async (req, res) => {
     try {
