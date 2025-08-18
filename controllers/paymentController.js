@@ -27,7 +27,7 @@ const calculateTotalAmount = async (cartItems) => {
 
         for (const item in cartItems) {
             const cartItem = cartItems[item];
-            
+
             let itemInfo = all_products.find((product) => product.id === Number(item));
 
             if (itemInfo) {
@@ -42,7 +42,7 @@ const calculateTotalAmount = async (cartItems) => {
                 if (totalQuantity > 0) {
                     productQuantities[itemInfo.id] = totalQuantity;
                 }
-                
+
                 totalAmount += itemInfo.new_price * totalQuantity;
             }
         }
@@ -100,8 +100,8 @@ exports.payment = asyncHandler(async (req, res) => {
             reference: data.data.reference,
             status: data.data.status, // "pending"
             checkoutUrl: data.data.checkout_url,
-            phone: req.body.callNumber, 
-            email: req.body.email,      
+            phone: req.body.callNumber,
+            email: req.body.email,
             name: req.body.name,
             cartItems: req.body.cartItems
         });
@@ -279,14 +279,19 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 <p>Atenciosamente,<br>ZaraMz</p>
             `;
 
-            await axios.post(`${API_HOST}/sendConfirmationEmail`, {
-                recipientEmail: updatedPayment.email,
-                subject: "Confirmação de Pagamento",
-                html: emailBody
-            });
+            try {
+                const response = await axios.post(`${API_HOST}/sendConfirmationEmail`, {
+                    recipientEmail: updatedPayment.email,
+                    subject: "Confirmação de Pagamento",
+                    html: emailBody
+                });
 
+                console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
+                console.log("📄 Resposta do endpoint:", response.message);
 
-            console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
+            } catch (error) {
+                console.error("❌ Erro ao enviar email:", error.response ? error.response.data : error.message);
+            }
         }
 
         res.status(200).json({ success: true, message: "Callback processado com sucesso" });
@@ -337,12 +342,12 @@ exports.getPaymentStatus = asyncHandler(async (req, res) => {
 
 
 const transporter = nodemailer.createTransport({
-    host: HOST, 
-    port: PORT_SMTP, 
-    secure: true, 
+    host: HOST,
+    port: PORT_SMTP,
+    secure: true,
     auth: {
-      user: EMAIL, 
-      pass: PASSWORD
+        user: EMAIL,
+        pass: PASSWORD
     }
 });
 
@@ -354,7 +359,7 @@ exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
             subject: req.body.subject,
             html: req.body.html
         };
-    
+
         await transporter.sendMail(mailOptions);
 
         res.status(200).json({ message: 'Email enviado com sucesso' });
