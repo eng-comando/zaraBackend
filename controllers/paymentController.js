@@ -15,6 +15,8 @@ const PASSWORD = process.env.PASSWORD;
 const API_HOST = process.env.API_HOST;
 const PAYSUITE_AUTH_KEY = process.env.PAYSUITE_AUTH_KEY;
 const API_FRONTEND = process.env.API_FRONTEND;
+const PORT_SMTP = process.env.PORT_SMTP;
+
 let productQuantities = {}
 
 const calculateTotalAmount = async (cartItems) => {
@@ -336,7 +338,7 @@ exports.getPaymentStatus = asyncHandler(async (req, res) => {
 
 const transporter = nodemailer.createTransport({
     host: HOST, 
-    port: 587, 
+    port: PORT_SMTP, 
     secure: false, 
     auth: {
       user: EMAIL, 
