@@ -344,7 +344,7 @@ exports.getPaymentStatus = asyncHandler(async (req, res) => {
 const transporter = nodemailer.createTransport({
     host: HOST,
     port: PORT_SMTP,
-    secure: false,
+    secure: true,
     auth: {
         user: EMAIL,
         pass: PASSWORD
