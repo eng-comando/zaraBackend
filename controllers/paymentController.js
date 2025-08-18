@@ -339,7 +339,7 @@ exports.getPaymentStatus = asyncHandler(async (req, res) => {
 const transporter = nodemailer.createTransport({
     host: HOST, 
     port: PORT_SMTP, 
-    secure: false, 
+    secure: true, 
     auth: {
       user: EMAIL, 
       pass: PASSWORD
@@ -356,9 +356,10 @@ exports.sendConfirmationEmail = asyncHandler(async (req, res, next) => {
         };
     
         await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ message: 'Email enviado com sucesso' });
     } catch (error) {
-        console.error('Error trying to send email: ', error);
-        res.send('Erro ao enviar e-mail: ', error);
+        console.error('Erro ao enviar email: ', error);
+        res.status(500).json({ message: 'Erro ao enviar email', error: error.message });
     }
-    res.send('Sent');
 });
