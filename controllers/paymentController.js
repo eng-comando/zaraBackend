@@ -287,7 +287,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 });
 
                 console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
-                console.log("📄 Resposta do endpoint:", response.message);
+                console.log("📄 Resposta do endpoint:", response.data);
 
             } catch (error) {
                 console.error("❌ Erro ao enviar email:", error.response ? error.response.data : error.message);
