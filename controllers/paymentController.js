@@ -273,11 +273,12 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 <p>Seu pagamento foi confirmado com sucesso! Abaixo estão os detalhes dos produtos:</p>
                 ${cartDetailsHTML}
                 <p><strong>Valor total:</strong> ${updatedPayment.amount} MZN</p>
-                <p><strong>Código da encomenda:</strong> <span style="font-weight: bold; color: red;">${orderCode}</span></p>
-                <p style="color: red; font-weight: bold;">Por favor, guarde este código. Ele será necessário para o levantamento da sua encomenda.</p>
+                <p><strong>Código da encomenda:</strong> <span style="font-weight: bold;">${orderCode}</span></p>
+                <p style="font-weight: bold;">Por favor, guarde este código. Ele será necessário para o levantamento da sua encomenda.</p>
                 <p>Obrigado por comprar conosco!</p>
                 <p>Atenciosamente,<br>ZaraMz</p>
             `;
+
 
             try {
                 const response = await axios.post(`${API_HOST}/sendConfirmationEmail`, {
@@ -287,7 +288,6 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 });
 
                 console.log("✅ Email de confirmação enviado para:", updatedPayment.email);
-                console.log("📄 Resposta do endpoint:", response.data);
 
             } catch (error) {
                 console.error("❌ Erro ao enviar email:", error.response ? error.response.data : error.message);
@@ -344,7 +344,7 @@ exports.getPaymentStatus = asyncHandler(async (req, res) => {
 const transporter = nodemailer.createTransport({
     host: HOST,
     port: PORT_SMTP,
-    secure: true,
+    secure: false,
     auth: {
         user: EMAIL,
         pass: PASSWORD
