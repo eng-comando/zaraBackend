@@ -60,7 +60,7 @@ exports.payment = asyncHandler(async (req, res) => {
         const recalculatedAmount = await calculateTotalAmount(req.body.cartItems);
 
         // 2. Criar referência única
-        const paymentReference = `ZARA-${uuidv4().replace(/-/g, '').slice(0, 14)}`;
+        const paymentReference = `ZARA${uuidv4().replace(/-/g, '').slice(0, 14)}`;
 
         // 3. Montar payload PaySuite
         const body = {
