@@ -25,6 +25,8 @@ router.post('/removefromcart', productController.removefromcart);
 
 router.post('/getcart', productController.getcart);
 
+router.post('/clearcart', productController.clearcart);
+
 router.put('/product/:productId', productController.updateProduct);
 
 router.delete('/product/:productId', productController.deleteProduct);

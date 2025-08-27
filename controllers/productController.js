@@ -79,7 +79,7 @@ exports.adminStats = asyncHandler(async (req, res) => {
     try {
         const admins = await Admin.find({})
             .select('username numProducts')
-            .sort({ numProducts: -1 }); 
+            .sort({ numProducts: -1 });
 
         res.json(admins);
     } catch (error) {
@@ -88,7 +88,7 @@ exports.adminStats = asyncHandler(async (req, res) => {
 });
 
 
-exports.addproduct = [authAdmin, 
+exports.addproduct = [authAdmin,
     body('name').notEmpty().withMessage('Name is required'),
     body('images').isArray().withMessage('Images must be an array'),
     body('category').notEmpty().withMessage('Category is required'),
@@ -101,34 +101,34 @@ exports.addproduct = [authAdmin,
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                console.log( errors.array());
+                console.log(errors.array());
                 return res.status(400).json({ errors: errors.array() });
             }
 
             let products = await Product.find({});
             let id = 1;
-        
-            if(products.length > 0) {
+
+            if (products.length > 0) {
                 let last_product_array = products.slice(-1);
                 let last_product = last_product_array[0];
-        
+
                 id = last_product.id + 1;
             }
-        
+
             const product = new Product({
-                id:id,
-                name:req.body.name,
-                images:req.body.images,
-                category:req.body.category,
-                type:req.body.type,
-                description:req.body.description,
-                color:req.body.color,
-                new_price:req.body.new_price,
-                old_price:req.body.old_price,
-                sizes:req.body.sizes,
-                link:req.body.link,
-                num_sells:req.body.num_sells,
-                favourite:req.body.favourite,
+                id: id,
+                name: req.body.name,
+                images: req.body.images,
+                category: req.body.category,
+                type: req.body.type,
+                description: req.body.description,
+                color: req.body.color,
+                new_price: req.body.new_price,
+                old_price: req.body.old_price,
+                sizes: req.body.sizes,
+                link: req.body.link,
+                num_sells: req.body.num_sells,
+                favourite: req.body.favourite,
             });
             await product.save();
 
@@ -141,11 +141,11 @@ exports.addproduct = [authAdmin,
             }
 
             console.log("Saved");
-        
+
             res.json({
-                success:true,
-                name:req.body.name,
-                messge:"Product added"
+                success: true,
+                name: req.body.name,
+                messge: "Product added"
             });
         } catch (error) {
             res.status(500).json({ message: 'Error adding product', error });
@@ -157,7 +157,7 @@ exports.deleteProduct = [authAdmin, asyncHandler(async (req, res) => {
     try {
         const { productId } = req.params;
         const product = await Product.findByIdAndDelete(productId);
-        
+
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -203,8 +203,8 @@ exports.favouriteProducts = asyncHandler(async (req, res) => {
 exports.updateFavouriteProducts = asyncHandler(async (req, res) => {
     try {
         await Product.updateMany(
-            { num_sells: { $gt: FAVOURITE_PRODUCT_CONST } }, 
-            { $set: { favourite: true } } 
+            { num_sells: { $gt: FAVOURITE_PRODUCT_CONST } },
+            { $set: { favourite: true } }
         );
 
         res.json({ message: 'Favourite products updated successfully' });
@@ -216,15 +216,15 @@ exports.updateFavouriteProducts = asyncHandler(async (req, res) => {
 
 exports.newcollections = asyncHandler(async (req, res) => {
     try {
-       const newCollection = await NewCollection.findOne();
+        const newCollection = await NewCollection.findOne();
 
-       if(!newCollection) {
-            return res.status(404).json({ message: 'New Collection not found'});
-       } else {
-            const products = await Product.find({ 'id': { $in: newCollection.ids} });
+        if (!newCollection) {
+            return res.status(404).json({ message: 'New Collection not found' });
+        } else {
+            const products = await Product.find({ 'id': { $in: newCollection.ids } });
 
             res.json(products);
-       }
+        }
     } catch (error) {
         res.status(500).json({ message: 'Error fetching new collections', error });
     }
@@ -237,12 +237,12 @@ exports.popularinwomen = asyncHandler(async (req, res) => {
         if (!popular) {
             return res.status(404).json({ message: 'Popular products not found' });
         } else {
-            const products = await Product.find({ 
+            const products = await Product.find({
                 'id': { $in: popular.ids },
                 category: 'women'
             });
             const popularWomenProducts = products.slice(0, 4);
-    
+
             res.json(popularWomenProducts);
         }
     } catch (error) {
@@ -292,7 +292,7 @@ exports.popularAndNewCollectionIds = asyncHandler(async (req, res) => {
             popularProducts: popularProducts ? popularProducts.ids : [],
             newCollection: newCollection ? newCollection.ids : []
         });
-    } catch(error) {
+    } catch (error) {
         console.error('Error fetching data from backend:', error);
         res.status(500).json({ error: 'Error fetching data from backend' });
     }
@@ -303,7 +303,7 @@ exports.popular = asyncHandler(async (req, res) => {
         const { popularProducts } = req.body;
         let popular = await Popular.findOne();
 
-        if(popular) {
+        if (popular) {
             popular.ids = popularProducts;
             await popular.save();
         } else {
@@ -313,9 +313,9 @@ exports.popular = asyncHandler(async (req, res) => {
 
         res.json({ message: 'Popular Products updated successfully!' });
     } catch (error) {
-    console.error('Error updating Popular Products:', error);
-    res.status(500).json({ error: 'Error updating Popular Products' });
-  }
+        console.error('Error updating Popular Products:', error);
+        res.status(500).json({ error: 'Error updating Popular Products' });
+    }
 });
 
 exports.newCollection = asyncHandler(async (req, res) => {
@@ -324,19 +324,19 @@ exports.newCollection = asyncHandler(async (req, res) => {
         let newCollection = await NewCollection.findOne();
 
         if (newCollection) {
-        newCollection.ids = newCollections;
-        await newCollection.save();
+            newCollection.ids = newCollections;
+            await newCollection.save();
         } else {
-        newCollection = new NewCollection({ ids: newCollections });
-        await newCollection.save();
+            newCollection = new NewCollection({ ids: newCollections });
+            await newCollection.save();
         }
 
         res.json({ message: 'New Collections updated successfully!' });
     } catch (error) {
         console.error('Error updating New Collections:', error);
         res.status(500).json({ error: 'Error updating New Collections' });
-      }
-    });
+    }
+});
 
 
 exports.addtocart = [fetchUser, asyncHandler(async (req, res) => {
@@ -430,39 +430,39 @@ exports.getProductDetails = async (req, res) => {
 };
 exports.getProductDetailsById = async (req, res) => {
     try {
-      const { productId } = req.params;
-  
-      const product = await Product.findOne({ id: productId });
-  
-      if (!product) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-  
-      res.status(200).json(product);
+        const { productId } = req.params;
+
+        const product = await Product.findOne({ id: productId });
+
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        res.status(200).json(product);
     } catch (error) {
-      console.error('Error fetching product:', error);
-      res.status(500).json({ message: 'Error fetching product', error });
+        console.error('Error fetching product:', error);
+        res.status(500).json({ message: 'Error fetching product', error });
     }
-  };
-  
-  exports.deleteProduct = async (req, res) => {
+};
+
+exports.deleteProduct = async (req, res) => {
     try {
         const { productId } = req.params;
 
         const deletedProduct = await Product.findOneAndDelete({ id: productId });
 
         if (!deletedProduct) {
-        return res.status(404).json({ message: 'Produto não encontrado' });
+            return res.status(404).json({ message: 'Produto não encontrado' });
         }
 
-        res.status(200).json({ message: 'Produto '+productId+' apagado com sucesso' });
+        res.status(200).json({ message: 'Produto ' + productId + ' apagado com sucesso' });
     } catch (error) {
         console.error('Erro ao apagar produto:', error);
         res.status(500).json({ message: 'Erro ao apagar produto' });
     }
-    };
+};
 
-  exports.checkProductExists = async (req, res) => {
+exports.checkProductExists = async (req, res) => {
     try {
         const { name } = req.body;
 
@@ -470,11 +470,11 @@ exports.getProductDetailsById = async (req, res) => {
 
         if (product) {
             const { color, images, ...productData } = product.toObject();
-            
-            return res.status(200).json({ 
-                exists: true, 
-                message: 'Produto com este nome já existe.', 
-                product: productData 
+
+            return res.status(200).json({
+                exists: true,
+                message: 'Produto com este nome já existe.',
+                product: productData
             });
         } else {
             return res.status(200).json({ exists: false, message: 'Produto disponível.' });
@@ -483,3 +483,20 @@ exports.getProductDetailsById = async (req, res) => {
         res.status(500).json({ message: 'Error checking product', error });
     }
 };
+exports.clearcart = [fetchUser, asyncHandler(async (req, res) => {
+    try {
+        const userData = await User.findById(req.user.id);
+        if (!userData) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        userData.cartData = {};
+        await User.findByIdAndUpdate(req.user.id, { cartData: userData.cartData });
+
+        res.json({ success: true, message: "Carrinho limpo com sucesso" });
+    } catch (error) {
+        console.error('Erro ao limpar carrinho:', error);
+        res.status(500).json({ message: 'Erro ao limpar carrinho', error });
+    }
+})];
+
