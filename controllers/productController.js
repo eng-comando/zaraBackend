@@ -444,7 +444,7 @@ exports.getProductDetailsById = async (req, res) => {
         res.status(500).json({ message: 'Error fetching product', error });
     }
 };
-
+/*
 exports.deleteProduct = async (req, res) => {
     try {
         const { productId } = req.params;
@@ -461,7 +461,7 @@ exports.deleteProduct = async (req, res) => {
         res.status(500).json({ message: 'Erro ao apagar produto' });
     }
 };
-
+*/
 exports.checkProductExists = async (req, res) => {
     try {
         const { name } = req.body;
