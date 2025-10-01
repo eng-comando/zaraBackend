@@ -81,7 +81,7 @@ exports.payment = asyncHandler(async (req, res) => {
 
         // 3. Montar payload PaySuite
         const body = {
-            amount: recalculatedAmount.toFixed(2),
+            amount: Number(recalculatedAmount.toFixed(2)),
             reference: paymentReference,
             description: `Pagamento de compra Zara MZ - ${paymentReference}`,
             return_url: `${API_FRONTEND}/payment?transactionId=${paymentReference}`, // frontend receberá transactionId
@@ -113,7 +113,7 @@ exports.payment = asyncHandler(async (req, res) => {
         // 5. Salvar pagamento no banco com dados do cliente
         const payment = new Payment({
             paysuiteId: data.data.id,
-            amount: data.data.amount,
+            amount: Number(data.data.amount),
             reference: data.data.reference,
             status: data.data.status, // "pending"
             checkoutUrl: data.data.checkout_url,
@@ -240,7 +240,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                         link: item.link,
                         name: item.name,
                         sizes: item.sizes,
-                        price: item.price,
+                        price: Number(item.price),
                         color: item.color,
                         productId: item.productId,
                         totalQuantity
