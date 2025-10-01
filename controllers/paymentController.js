@@ -256,7 +256,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                     link: item.link,
                     name: item.name,
                     sizes: item.sizes,
-                    price: item.price,
+                    price: Number(item.price),
                     color: item.color,
                     productId: item.productId,
                     quantity0: item.quantity0 || 0,
@@ -276,7 +276,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 email: updatedPayment.email,
                 name: updatedPayment.name,
                 status: "Recebido",
-                price: updatedPayment.amount,
+                price: Number(updatedPayment.amount),
                 payment: updatedPayment._id,
                 deliveryOption: updatedPayment.deliveryOption,
                 code: orderCode
