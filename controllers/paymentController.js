@@ -75,7 +75,7 @@ exports.payment = asyncHandler(async (req, res) => {
     try {
         // 1. Calcular valor total a pagar
         const recalculatedAmount = await calculateTotalAmount(req.body.cartItems, req.body.deliveryOption);
-
+        console.log("Valor: "+recalculatedAmount)
         // 2. Criar referência única
         const paymentReference = `ZARA${uuidv4().replace(/-/g, '').slice(0, 14)}`;
 
