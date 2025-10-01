@@ -16,10 +16,12 @@ const API_HOST = process.env.API_HOST;
 const PAYSUITE_AUTH_KEY = process.env.PAYSUITE_AUTH_KEY;
 const API_FRONTEND = process.env.API_FRONTEND;
 const PORT_SMTP = process.env.PORT_SMTP;
-
+const MAPUTO = process.env.MAPUTO;
+const MATOLA = process.env.MATOLA;
+const OTHER = process.env.OTHER;
 let productQuantities = {}
 
-const calculateTotalAmount = async (cartItems) => {
+const calculateTotalAmount = async (cartItems, deliveryOption) => {
     let totalAmount = 0;
 
     try {
@@ -50,14 +52,29 @@ const calculateTotalAmount = async (cartItems) => {
         console.error('Error calculating total amount:', error);
         throw new Error('Erro ao calcular o valor total');
     }
-    return totalAmount;
+    return totalAmount + getDeliveryCost(deliveryOption);
 };
+
+  const getDeliveryCost = (deliveryOption) => {
+    switch (deliveryOption) {
+      case 'pickup':
+        return 0;
+      case 'maputo':
+        return Number(MAPUTO);
+      case 'matola':
+        return Number(MATOLA);
+      case 'other':
+        return Number(OTHER);
+      default:
+        return 0;
+    }
+  };
 
 // Criar pagamento
 exports.payment = asyncHandler(async (req, res) => {
     try {
         // 1. Calcular valor total a pagar
-        const recalculatedAmount = await calculateTotalAmount(req.body.cartItems);
+        const recalculatedAmount = await calculateTotalAmount(req.body.cartItems, req.body.deliveryOption);
 
         // 2. Criar referência única
         const paymentReference = `ZARA${uuidv4().replace(/-/g, '').slice(0, 14)}`;
@@ -103,7 +120,8 @@ exports.payment = asyncHandler(async (req, res) => {
             phone: req.body.callNumber,
             email: req.body.email,
             name: req.body.name,
-            cartItems: req.body.cartItems
+            cartItems: req.body.cartItems,
+            deliveryOption: req.body.deliveryOption
         });
         await payment.save();
 
@@ -260,6 +278,7 @@ exports.paymentCallback = asyncHandler(async (req, res) => {
                 status: "Recebido",
                 price: updatedPayment.amount,
                 payment: updatedPayment._id,
+                deliveryOption: updatedPayment.deliveryOption,
                 code: orderCode
             });
 

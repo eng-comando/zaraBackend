@@ -39,7 +39,10 @@ const paymentSchema = new mongoose.Schema({
   cartItems: {     
     type: Array,
     default: []
-  }
+  },
+  deliveryOption: {            
+    type: String,
+  },
 });
 
 module.exports = mongoose.model("Payment", paymentSchema);
